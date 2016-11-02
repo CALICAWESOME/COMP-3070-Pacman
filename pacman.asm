@@ -15,13 +15,13 @@ main PROC
 	call MovePacUp
 	mov eax, 100
 	call Delay
-	call MovePacUp
+	call MovePacRight
 	mov eax, 100
 	call Delay
-	call MovePacUp
+	call MovePacDown 
 	mov eax, 100
 	call Delay
-	call MovePacUp
+	call MovePacLeft
 
 	exit
 
@@ -49,6 +49,8 @@ ShowPac PROC uses eax edx
 
 ShowPac ENDP
 
+; takes current x and y coords of PacMan and sets that coord to a space
+
 UnShowPac PROC
 
 	mov dl, pacXCoord
@@ -66,12 +68,48 @@ MovePacUp PROC uses edx
 
 	call UnShowPac
 
-	dec PacYCoord
+	dec PacYCoord		; move up 1 Y-coordinate
 
 	call ShowPac
 
 	ret
 
 MovePacUp ENDP
+
+MovePacDown PROC uses edx
+
+	call UnShowPac
+
+	inc PacYCoord		; move down 1 Y-coordinate
+
+	call ShowPac
+
+	ret
+
+MovePacDown ENDP
+
+MovePacLeft PROC uses edx
+
+	call UnShowPac
+
+	dec PacXCoord		; move left 1 X-coordinate
+
+	call ShowPac
+
+	ret
+
+MovePacLeft ENDP
+
+MovePacRight PROC uses edx
+
+	call UnShowPac
+
+	inc PacXCoord		; move right 1 X-coordinate
+
+	call ShowPac
+
+	ret
+
+MovePacRight ENDP
 
 end main

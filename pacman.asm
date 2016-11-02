@@ -4,6 +4,7 @@ INCLUDE Irvine32.inc
 
 	pacXCoord db 20		; byte used to hold the X-coordinate of PacMan
 	pacYCoord db 10		; byte used to hold the Y-coordinate of PacMan
+	pacChar db 234
 
 .code
 
@@ -30,7 +31,7 @@ main ENDP
 ; dl = X-coordinate
 ; dh = Y-coordinate
 
-ShowPac PROC uses eax edx
+ShowPac PROC uses edx
 
 	mov eax, 0Eh
 	call SetTextColor	; set text color to yellow
@@ -39,7 +40,7 @@ ShowPac PROC uses eax edx
 	mov dh, pacYCoord
 	call Gotoxy			; move cursor to desired X and Y coordinate
 
-	mov eax, 234
+	movzx eax, pacChar	; for direction
 	call WriteChar		; SHOW ME THE MANS
 
 	mov eax, 0Fh
@@ -64,10 +65,13 @@ UnShowPac PROC
 
 UnShowPac ENDP
 
+; move PacMan up one space
+
 MovePacUp PROC uses edx
 
 	call UnShowPac
 
+	mov pacChar, 'V'
 	dec PacYCoord		; move up 1 Y-coordinate
 
 	call ShowPac
@@ -76,10 +80,13 @@ MovePacUp PROC uses edx
 
 MovePacUp ENDP
 
+; move PacMan down one space
+
 MovePacDown PROC uses edx
 
 	call UnShowPac
 
+	mov pacChar, 234
 	inc PacYCoord		; move down 1 Y-coordinate
 
 	call ShowPac
@@ -88,10 +95,13 @@ MovePacDown PROC uses edx
 
 MovePacDown ENDP
 
+; move PacMan left one space
+
 MovePacLeft PROC uses edx
 
 	call UnShowPac
 
+	mov pacChar, '>'
 	dec PacXCoord		; move left 1 X-coordinate
 
 	call ShowPac
@@ -100,10 +110,13 @@ MovePacLeft PROC uses edx
 
 MovePacLeft ENDP
 
+; move PacMan right one space
+
 MovePacRight PROC uses edx
 
 	call UnShowPac
 
+	mov pacChar, '<'
 	inc PacXCoord		; move right 1 X-coordinate
 
 	call ShowPac

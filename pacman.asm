@@ -4,23 +4,23 @@ INCLUDE Irvine32.inc
 
 	pacXCoord db 20		; byte used to hold the X-coordinate of PacMan
 	pacYCoord db 10		; byte used to hold the Y-coordinate of PacMan
-	pacChar db 234
+	pacChar db 'V'
 
 .code
 
 main PROC
 
 	call ShowPac
-	mov eax, 100
+	mov eax, 300
 	call Delay
 	call MovePacUp
-	mov eax, 100
+	mov eax, 300
 	call Delay
 	call MovePacRight
-	mov eax, 100
+	mov eax, 300
 	call Delay
 	call MovePacDown 
-	mov eax, 100
+	mov eax, 300
 	call Delay
 	call MovePacLeft
 

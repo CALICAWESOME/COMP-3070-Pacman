@@ -265,8 +265,8 @@ MovePacUp PROC uses edx
 	CARRYONUP:
 		call UnShowPac
 
-		mov pacChar1, ':'
-		mov pacChar2, 'v'
+		mov pacChar1, 'v'
+		mov pacChar2, ':'
 		dec PacYCoord		; move up 1 Y-coordinate
 
 		call ShowPac
@@ -293,6 +293,9 @@ MovePacDown PROC uses edx
 	cmp al, 30h
 	jl CARRYONDOWN
 
+	cmp al, 5Fh
+	je ENDDOWN
+
 	cmp al, 39h
 	jg CARRYONDOWN
 
@@ -301,8 +304,8 @@ MovePacDown PROC uses edx
 	CARRYONDOWN:
 		call UnShowPac
 
-		mov pacChar1, ':'
-		mov pacChar2, 239
+		mov pacChar1, 239
+		mov pacChar2, ':'
 		inc PacYCoord		; move down 1 Y-coordinate
 
 		call ShowPac

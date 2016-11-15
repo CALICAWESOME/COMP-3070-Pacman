@@ -2,42 +2,44 @@ INCLUDE Irvine32.inc
 
 .data
 
-	pacXCoord db 20				; byte used to hold the X-coordinate of PacMan
-	pacYCoord db 10				; byte used to hold the Y-coordinate of PacMan
-	pacChar db 'V'
-	moveInst dd MovePacRight	; holds address of movePacman instruction to execute
+	pacXCoord db 28			; byte used to hold the X-coordinate of PacMan
+	pacYCoord db 23				; byte used to hold the Y-coordinate of PacMan
+	pacChar1 db ">"
+	pacChar2 db "'"
+	multiple dd ?
+	moveInst dd MovePacLeft		; holds address of movePacman instruction to execute
 
-	theMap	db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #",0
-			db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #",0
-			db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #",0
-			db "# O #     # . #       # . # # . #       # . #     # O #",0
-			db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #",0
-			db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #",0
-			db "# . # # # # . # # . # # # # # # # # . # # . # # # # . #",0
-			db "# . # # # # . # # . # # # # # # # # . # # . # # # # . #",0
-			db "# . . . . . . # # . . . . # # . . . . # # . . . . . . #",0
-			db "# # # # # # . # # # # #   # #   # # # # # . # # # # # #",0
-			db "          # . # # # # #   # #   # # # # # . #          ",0
-			db "          # . # #                     # # . #          ",0
-			db "          # . # #   # # # _ _ # # #   # # . #          ",0
-			db "# # # # # # . # #   #             #   # # . # # # # # #",0
-			db "            .       #             #       .            ",0
-			db "# # # # # # . # #   #             #   # # . # # # # # #",0
-			db "          # . # #   # # # # # # # #   # # . #          ",0
-			db "          # . # #                     # # . #          ",0
-			db "          # . # #   # # # # # # # #   # # . #          ",0
-			db "# # # # # # . # #   # # # # # # # #   # # . # # # # # #",0
-			db "# . . . . . . . . . . . . # # . . . . . . . . . . . . #",0
-			db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #",0
-			db "# . # # # # . # # # # # . # # . # # # # # . # # # # . #",0
-			db "# O . . # # . . . . . . .     . . . . . . . # # . . O #",0
-			db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #",0
-			db "# # # . # # . # # . # # # # # # # # . # # . # # . # # #",0
-			db "# . . . . . . # # . . . . # # . . . . # # . . . . . . #",0
-			db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #",0
-			db "# . # # # # # # # # # # . # # . # # # # # # # # # # . #",0
-			db "# . . . . . . . . . . . . . . . . . . . . . . . . . . #",0
-			db "# # # # # # # # # # # # # # # # # # # # # # # # # # # #",0
+	theMap	db "788888888888888888888888889 788888888888888888888888889",0
+			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4",0
+			db "4 . 7888889 . 788888889 . 4 4 . 788888889 . 7888889 . 4",0
+			db "4 O 4     4 . 4       4 . 4 4 . 4       4 . 4     4 O 4",0
+			db "4 . 1888883 . 188888883 . 183 . 188888883 . 1888883 . 4",0
+			db "4 . . . . . . . . . . . . . . . . . . . . . . . . . . 4",0
+			db "4 . 7888889 . 789 . 788888888888889 . 789 . 7888889 . 4",0
+			db "4 . 1888883 . 4 4 . 1888889 7888883 . 4 4 . 1888883 . 4",0
+			db "4 . . . . . . 4 4 . . . . 4 4 . . . . 4 4 . . . . . . 4",0
+			db "18888888889 . 4 1888889   4 4   7888883 4 . 78888888883",0
+			db "          4 . 4 7888883   183   1888889 4 . 4          ",0
+			db "          4 . 4 4                     4 4 . 4          ",0
+			db "          4 . 4 4   78888_____88889   4 4 . 4          ",0
+			db "88888888883 . 183   4             4   183 . 18888888888",0
+			db "            .       4             4       .            ",0
+			db "88888888889 . 789   4             4   789 . 78888888888",0
+			db "          4 . 4 4   188888888888883   4 4 . 4          ",0
+			db "          4 . 4 4                     4 4 . 4          ",0
+			db "          4 . 4 4   788888888888889   4 4 . 4          ",0
+			db "78888888883 . 183   1888889 7888883   183 . 18888888889",0
+			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4",0
+			db "4 . 7888889 . 788888889 . 4 4 . 788888889 . 7888889 . 4",0
+			db "4 . 18889 4 . 188888883 . 183 . 188888883 . 4 78883 . 4",0
+			db "4 O . . 4 4 . . . . . . .     . . . . . . . 4 4 . . O 4",0
+			db "18889 . 4 4 . 789 . 788888888888889 . 789 . 4 4 . 78883",0
+			db "78883 . 183 . 4 4 . 1888889 7888883 . 4 4 . 183 . 18889",0
+			db "4 . . . . . . 4 4 . . . . 4 4 . . . . 4 4 . . . . . . 4",0
+			db "4 . 78888888883 1888889 . 4 4 . 7888883 18888888889 . 4",0
+			db "4 . 1888888888888888883 . 183 . 1888888888888888883 . 4",0
+			db "4 . . . . . . . . . . . . . . . . . . . . . . . . . . 4",0
+			db "1888888888888888888888888888888888888888888888888888883",0
 						
 
 .code
@@ -47,24 +49,15 @@ main PROC
 	call DrawMap
 
 	call ShowPac
-	mov eax, 100
-	call Delay
-	call MovePacUp
-	mov eax, 100
-	call Delay
-	call MovePacRight
-	mov eax, 100
-	call Delay
-	call MovePacDown 
-	mov eax, 100
-	call Delay
-	call MovePacLeft
 
 	LOOPME:
 		call ControlLoop
 		mov eax, 100
 		call Delay
 		jmp LOOPME
+	mov dl, 0
+	mov dh, 31
+	call GoToXY
 
 	exit
 
@@ -79,8 +72,23 @@ DrawMap PROC uses eax
 		mov eax, 0
 		mov al, [esi]
 		
-		cmp al, "#"
-		je PRINTWALL
+		cmp al, "7"
+		je PRINTWALL7
+
+		cmp al, "9"
+		je PRINTWALL9
+
+		cmp al, "1"
+		je PRINTWALL1
+
+		cmp al, "3"
+		je PRINTWALL3
+
+		cmp al, "8"
+		je PRINTWALL8
+
+		cmp al, "4"
+		je PRINTWALL4
 
 		cmp al, "."
 		je PRINTDOT
@@ -98,37 +106,85 @@ DrawMap PROC uses eax
 		inc esi
 		loop DRAWMAPLOOP
 
-	PRINTWALL:
+	PRINTWALL7:
 		mov eax, 9
 		call SetTextColor
-		mov eax, "#"
+		mov eax, 201
 		call WriteChar
 		inc esi
 		loop DRAWMAPLOOP
+
+	PRINTWALL9:
+		mov eax, 9
+		call SetTextColor
+		mov eax, 187
+		call WriteChar
+		inc esi
+		dec ecx				; do a loop jump manually
+		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
+
+	PRINTWALL1:
+		mov eax, 9
+		call SetTextColor
+		mov eax, 200
+		call WriteChar
+		inc esi
+		dec ecx				; do a loop jump manually
+		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
+
+	PRINTWALL3:
+		mov eax, 9
+		call SetTextColor
+		mov eax, 188
+		call WriteChar
+		inc esi
+		dec ecx				; do a loop jump manually
+		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
+
+	PRINTWALL8:
+		mov eax, 9
+		call SetTextColor
+		mov eax, 205
+		call WriteChar
+		inc esi
+		dec ecx				; do a loop jump manually
+		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
+
+	PRINTWALL4:
+		mov eax, 9
+		call SetTextColor
+		mov eax, 186
+		call WriteChar
+		inc esi
+		dec ecx				; do a loop jump manually
+		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
 
 	PRINTDOT:
 		mov eax, 7
 		call SetTextColor
-		mov eax, "."
+		mov eax, 250
 		call WriteChar
 		inc esi
-		loop DRAWMAPLOOP
+		dec ecx				; do a loop jump manually
+		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
 
 	PRINTBIGDOT:
-		mov eax, 15
+		mov eax, 7
 		call SetTextColor
-		mov eax, "O"
+		mov eax, 254
 		call WriteChar
 		inc esi
-		loop DRAWMAPLOOP
+		dec ecx				; do a loop jump manually
+		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
 
 	PRINTGATE:
-		mov eax, 15
+		mov eax, 12
 		call SetTextColor
-		mov eax, "_"
+		mov eax, 196
 		call WriteChar
 		inc esi
-		loop DRAWMAPLOOP
+		dec ecx				; do a loop jump manually
+		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
 
 	CARRIAGERETURN:
 		call crlf
@@ -149,15 +205,17 @@ DrawMap ENDP
 
 ShowPac PROC uses edx
 
-	mov eax, 0Eh
+	mov eax, black+(yellow*16)
 	call SetTextColor	; set text color to yellow
 
 	mov dl, pacXCoord
 	mov dh, pacYCoord
 	call Gotoxy			; move cursor to desired X and Y coordinate
 
-	movzx eax, pacChar	; for direction
+	movzx eax, pacChar1	; for direction
 	call WriteChar		; SHOW ME THE MANS
+	movzx eax, pacChar2
+	call WriteChar
 
 	mov eax, 0Fh
 	call SetTextColor	; reset text color
@@ -176,6 +234,7 @@ UnShowPac PROC
 
 	mov eax, 32
 	call WriteChar		; UNSHOW ME THE MANS
+	call WriteChar
 
 	ret
 
@@ -185,14 +244,35 @@ UnShowPac ENDP
 
 MovePacUp PROC uses edx
 
-	call UnShowPac
+	mov esi, OFFSET theMap
+	movzx eax, pacYCoord
+	dec eax
+	mov ebx, LENGTHOF theMap
+	call Multiply
+	movzx ebx, pacXCoord
+	add eax, ebx
+	add esi, eax
+	mov al, [esi]
 
-	mov pacChar, 'V'
-	dec PacYCoord		; move up 1 Y-coordinate
+	cmp al, 30h
+	jl CARRYONUP
 
-	call ShowPac
+	cmp al, 39h
+	jg CARRYONUP
 
-	ret
+	jmp ENDUP
+
+	CARRYONUP:
+		call UnShowPac
+
+		mov pacChar1, ':'
+		mov pacChar2, 'v'
+		dec PacYCoord		; move up 1 Y-coordinate
+
+		call ShowPac
+
+	ENDUP:
+		ret
 
 MovePacUp ENDP
 
@@ -200,14 +280,35 @@ MovePacUp ENDP
 
 MovePacDown PROC uses edx
 
-	call UnShowPac
+	mov esi, OFFSET theMap
+	movzx eax, pacYCoord
+	inc eax
+	mov ebx, LENGTHOF theMap
+	call Multiply
+	movzx ebx, pacXCoord
+	add eax, ebx
+	add esi, eax
+	mov al, [esi]
 
-	mov pacChar, 234
-	inc PacYCoord		; move down 1 Y-coordinate
+	cmp al, 30h
+	jl CARRYONDOWN
 
-	call ShowPac
+	cmp al, 39h
+	jg CARRYONDOWN
 
-	ret
+	jmp ENDDOWN
+
+	CARRYONDOWN:
+		call UnShowPac
+
+		mov pacChar1, ':'
+		mov pacChar2, 239
+		inc PacYCoord		; move down 1 Y-coordinate
+
+		call ShowPac
+
+	ENDDOWN:
+		ret
 
 MovePacDown ENDP
 
@@ -215,14 +316,35 @@ MovePacDown ENDP
 
 MovePacLeft PROC uses edx
 
-	call UnShowPac
+	mov esi, OFFSET theMap
+	movzx eax, pacYCoord
+	mov ebx, LENGTHOF theMap
+	call Multiply
+	movzx ebx, pacXCoord
+	sub ebx, 2
+	add eax, ebx
+	add esi, eax
+	mov al, [esi]
 
-	mov pacChar, '>'
-	sub PacXCoord, 2	; move left 1 X-coordinate
+	cmp al, 30h
+	jl CARRYONLEFT
 
-	call ShowPac
+	cmp al, 39h
+	jg CARRYONLEFT
 
-	ret
+	jmp ENDLEFT
+
+	CARRYONLEFT:
+		call UnShowPac
+
+		mov pacChar1, '>'
+		mov pacChar2, "'"
+		sub PacXCoord, 2	; move left 1 X-coordinate
+
+		call ShowPac
+	
+	ENDLEFT:
+		ret
 
 MovePacLeft ENDP
 
@@ -230,14 +352,35 @@ MovePacLeft ENDP
 
 MovePacRight PROC uses edx
 
-	call UnShowPac
+	mov esi, OFFSET theMap
+	movzx eax, pacYCoord
+	mov ebx, LENGTHOF theMap
+	call Multiply
+	movzx ebx, pacXCoord
+	add ebx, 2
+	add eax, ebx
+	add esi, eax
+	mov al, [esi]
 
-	mov pacChar, '<'
-	add PacXCoord, 2	; move right 1 X-coordinate
+	cmp al, 30h
+	jl CARRYONRIGHT
 
-	call ShowPac
+	cmp al, 39h
+	jg CARRYONRIGHT
 
-	ret
+	jmp ENDRIGHT
+
+	CARRYONRIGHT:
+		call UnShowPac
+
+		mov pacChar1, "'"
+		mov pacChar2, '<'
+		add PacXCoord, 2	; move right 1 X-coordinate
+
+		call ShowPac
+
+	ENDRIGHT:
+		ret
 
 MovePacRight ENDP
 
@@ -282,5 +425,21 @@ ControlLoop PROC uses eax
 		ret
 
 ControlLoop ENDP
+
+; eax = eax * ebx
+
+Multiply PROC uses ecx
+	
+	mov ecx, ebx
+	dec ecx
+	mov multiple, eax
+
+	multiplu:
+		add eax, multiple
+		loop multiplu
+
+	ret
+
+multiply ENDP
 
 end main

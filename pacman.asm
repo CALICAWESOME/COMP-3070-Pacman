@@ -2,6 +2,7 @@ INCLUDE Irvine32.inc
 
 .data
 
+	mapSize dd 1736
 	pacXCoord db 28			; byte used to hold the X-coordinate of PacMan
 	pacYCoord db 23				; byte used to hold the Y-coordinate of PacMan
 	pacChar1 db ">"
@@ -65,7 +66,7 @@ main ENDP
 
 DrawMap PROC uses eax
 
-	mov ecx, 1736			; TODO: un-hardcode this
+	mov ecx, mapSize			; TODO: un-hardcode this
 	mov esi, OFFSET theMap
 
 	DRAWMAPLOOP:
@@ -244,15 +245,9 @@ UnShowPac ENDP
 
 MovePacUp PROC uses edx
 
-	mov esi, OFFSET theMap
 	movzx eax, pacYCoord
-	dec eax
-	mov ebx, LENGTHOF theMap
-	call Multiply
 	movzx ebx, pacXCoord
-	add eax, ebx
-	add esi, eax
-	mov al, [esi]
+	call CheckAbove
 
 	cmp al, 30h
 	jl CARRYONUP
@@ -280,15 +275,9 @@ MovePacUp ENDP
 
 MovePacDown PROC uses edx
 
-	mov esi, OFFSET theMap
 	movzx eax, pacYCoord
-	inc eax
-	mov ebx, LENGTHOF theMap
-	call Multiply
 	movzx ebx, pacXCoord
-	add eax, ebx
-	add esi, eax
-	mov al, [esi]
+	call CheckBelow
 
 	cmp al, 30h
 	jl CARRYONDOWN
@@ -319,15 +308,9 @@ MovePacDown ENDP
 
 MovePacLeft PROC uses edx
 
-	mov esi, OFFSET theMap
 	movzx eax, pacYCoord
-	mov ebx, LENGTHOF theMap
-	call Multiply
 	movzx ebx, pacXCoord
-	sub ebx, 2
-	add eax, ebx
-	add esi, eax
-	mov al, [esi]
+	call CheckLeft
 
 	cmp al, 30h
 	jl CARRYONLEFT
@@ -355,15 +338,9 @@ MovePacLeft ENDP
 
 MovePacRight PROC uses edx
 
-	mov esi, OFFSET theMap
 	movzx eax, pacYCoord
-	mov ebx, LENGTHOF theMap
-	call Multiply
 	movzx ebx, pacXCoord
-	add ebx, 2
-	add eax, ebx
-	add esi, eax
-	mov al, [esi]
+	call CheckRight
 
 	cmp al, 30h
 	jl CARRYONRIGHT
@@ -386,6 +363,72 @@ MovePacRight PROC uses edx
 		ret
 
 MovePacRight ENDP
+
+; eax = y coordinate
+; ebx = x coordinate
+
+CheckAbove PROC uses esi
+
+	dec eax
+	call CheckPos
+
+	ret
+
+CheckAbove ENDP
+
+; eax = y coordinate
+; ebx = x coordinate
+
+CheckBelow PROC
+
+	inc eax
+	call CheckPos
+
+	ret
+
+CheckBelow ENDP
+
+; eax = y coordinate
+; ebx = x coordinate
+
+CheckLeft PROC
+
+	sub ebx, 2
+	call CheckPos
+
+	ret
+
+CheckLeft ENDP
+
+; eax = y coordinate
+; ebx = x coordinate
+
+CheckRight PROC
+
+	add ebx, 2
+	call CheckPos
+
+	ret
+
+CheckRight ENDP
+
+; eax = y coordinate
+; ebx = x coordinate
+
+CheckPos PROC
+
+	mov esi, OFFSET theMap
+	push ebx
+	mov ebx, LENGTHOF theMap
+	call Multiply
+	pop ebx
+	add eax, ebx
+	add esi, eax
+	mov al, [esi]
+
+	ret
+
+CheckPos ENDP
 
 ControlLoop PROC uses eax
 

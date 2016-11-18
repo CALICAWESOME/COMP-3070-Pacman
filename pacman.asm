@@ -3,12 +3,13 @@ INCLUDE Irvine32.inc
 .data
 
 	mapSize dd 1736
-	pacXCoord db 28			; byte used to hold the X-coordinate of PacMan
+	pacXCoord db 28				; byte used to hold the X-coordinate of PacMan
 	pacYCoord db 23				; byte used to hold the Y-coordinate of PacMan
 	pacChar1 db ">"
 	pacChar2 db "'"
 	multiple dd ?
 	moveInst dd MovePacLeft		; holds address of movePacman instruction to execute
+	moveCache dd MovePacLeft
 
 	theMap	db "788888888888888888888888889 788888888888888888888888889",0
 			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4",0
@@ -24,7 +25,7 @@ INCLUDE Irvine32.inc
 			db "          4 . 4 4                     4 4 . 4          ",0
 			db "          4 . 4 4   78888_____88889   4 4 . 4          ",0
 			db "88888888883 . 183   4             4   183 . 18888888888",0
-			db "            .       4             4       .            ",0
+			db "<           .       4             4       .           >",0
 			db "88888888889 . 789   4             4   789 . 78888888888",0
 			db "          4 . 4 4   188888888888883   4 4 . 4          ",0
 			db "          4 . 4 4                     4 4 . 4          ",0
@@ -103,6 +104,7 @@ DrawMap PROC uses eax
 		cmp al, 0
 		je CARRIAGERETURN
 
+		mov eax, " "
 		call WriteChar
 		inc esi
 		loop DRAWMAPLOOP
@@ -255,6 +257,7 @@ MovePacUp PROC uses edx
 	cmp al, 39h
 	jg CARRYONUP
 
+	mov ebx, 1
 	jmp ENDUP
 
 	CARRYONUP:
@@ -288,6 +291,7 @@ MovePacDown PROC uses edx
 	cmp al, 39h
 	jg CARRYONDOWN
 
+	mov ebx, 1
 	jmp ENDDOWN
 
 	CARRYONDOWN:
@@ -318,6 +322,7 @@ MovePacLeft PROC uses edx
 	cmp al, 39h
 	jg CARRYONLEFT
 
+	mov ebx, 1
 	jmp ENDLEFT
 
 	CARRYONLEFT:
@@ -348,6 +353,7 @@ MovePacRight PROC uses edx
 	cmp al, 39h
 	jg CARRYONRIGHT
 
+	mov ebx, 1
 	jmp ENDRIGHT
 
 	CARRYONRIGHT:
@@ -420,7 +426,7 @@ CheckPos PROC
 	mov esi, OFFSET theMap
 	push ebx
 	mov ebx, LENGTHOF theMap
-	call Multiply
+	mul ebx
 	pop ebx
 	add eax, ebx
 	add esi, eax
@@ -432,8 +438,10 @@ CheckPos ENDP
 
 ControlLoop PROC uses eax
 
+	mov edx, 100
+	call Gotoxy
 	call ReadKey
-	jz ENDCONTROLLOOP	; if no key is pressed at all
+	call WriteHex
 
 	cmp eax, 4B00h		; on left arrow key press
 	je MOVELEFT
@@ -447,45 +455,41 @@ ControlLoop PROC uses eax
 	cmp eax, 5000h		; on down arrow key press
 	je MOVEDOWN
 
-	jmp ENDCONTROLLOOP
+	jmp TRYMOVE
 
 	MOVELEFT:
 		mov moveInst, OFFSET MovePacLeft
-		jmp ENDCONTROLLOOP
+		jmp TRYMOVE
 
 	MOVEUP:
 		mov moveInst, OFFSET MovePacUp
-		jmp ENDCONTROLLOOP
+		jmp TRYMOVE
 
 	MOVERIGHT:
 		mov moveInst, OFFSET MovePacRight
-		jmp ENDCONTROLLOOP
+		jmp TRYMOVE
 
 	MOVEDOWN:
 		mov moveInst, OFFSET MovePacDown
-		jmp ENDCONTROLLOOP
+		jmp TRYMOVE
 
-	ENDCONTROLLOOP:
+	TRYMOVE:
 		mov eax, moveInst
 		call NEAR PTR eax
+		cmp ebx, 1
+		je PACCANTGOTHERE
+
+		mov eax, moveInst
+		mov moveCache, eax
+		jmp ENDCONTROLLOOP
+
+	PACCANTGOTHERE:
+		mov eax, moveCache
+		call NEAR PTR eax
+
+	ENDCONTROLLOOP:
 		ret
 
 ControlLoop ENDP
-
-; eax = eax * ebx
-
-Multiply PROC uses ecx
-	
-	mov ecx, ebx
-	dec ecx
-	mov multiple, eax
-
-	multiplu:
-		add eax, multiple
-		loop multiplu
-
-	ret
-
-multiply ENDP
 
 end main

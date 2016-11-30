@@ -9,7 +9,14 @@ INCLUDE Irvine32.inc
 	pacChar2 db "'"
 	moveInst dd MovePacLeft		; holds address of movePacman instruction to execute
 	moveCache dd MovePacLeft	; holds backup movement instruction in case moveInst is not possible
+	fixRightTube db 0
+	fixLeftTube db 0
+
+	G1XCoord db 22
+	G1YCoord db 14
+
 	score dd 0
+	gameClock dd 0
 
 	theMap	db "788888888888888888888888889 788888888888888888888888889",0
 			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4",0
@@ -48,9 +55,10 @@ INCLUDE Irvine32.inc
 
 main PROC
 
+	call Randomize
 	call DrawMap
-
 	call ShowPac
+	call ShowG1
 
 	LOOPME:
 		call ControlLoop
@@ -211,7 +219,7 @@ DrawMap ENDP
 ShowPac PROC uses edx
 
 	mov eax, black+(yellow*16)
-	call SetTextColor	; set text color to yellow
+	call SetTextColor
 
 	mov dl, pacXCoord
 	mov dh, pacYCoord
@@ -228,6 +236,24 @@ ShowPac PROC uses edx
 	ret
 
 ShowPac ENDP
+
+ShowG1 PROC
+
+	mov eax, white+(red*16)
+	call SetTextColor
+
+	mov dl, G1XCoord
+	mov dh, G1YCoord
+	call Gotoxy
+
+	mov eax, 248
+	call WriteChar
+	call WriteChar
+
+	mov eax, 0Fh
+	call SetTextColor
+
+ShowG1 ENDP
 
 ; takes current x and y coords of PacMan and sets that coord to a space
 
@@ -445,6 +471,28 @@ ControlLoop PROC uses eax
 	mov eax, score
 	call WriteDec
 
+	cmp fixLeftTube, 0FFh
+	jne DONTFIXLEFT
+	mov dl, 54
+	mov dh, 14
+	call Gotoxy
+	mov eax, " "
+	call WriteChar
+	call WriteChar
+	mov fixLeftTube, 0
+	DONTFIXLEFT:
+
+	cmp fixRightTube, 0FFh
+	jne DONTFIXRIGHT
+	mov dl, 0
+	mov dh, 14
+	call Gotoxy
+	mov eax, " "
+	call WriteChar
+	call WriteChar
+	mov fixRightTube, 0
+	DONTFIXRIGHT:
+
 	call ReadKey
 
 	cmp eax, 4B00h		; on left arrow key press
@@ -505,10 +553,10 @@ ControlLoop PROC uses eax
 	je SCOREBIGDOT
 
 	cmp al, ">"
-	je TRAVERSELEFTTUBE
+	je TRAVERSERIGHTTUBE
 
 	cmp al, "<"
-	je TRAVERSERIGHTTUBE
+	je TRAVERSELEFTTUBE
 
 	jmp ENDCHARCHECK
 
@@ -519,23 +567,27 @@ ControlLoop PROC uses eax
 
 	SCOREBIGDOT:
 		add score, 50
-		mov [esi], edx
+		mov [esi], dl
 		jmp ENDCHARCHECK
 
 	TRAVERSELEFTTUBE:
-		call UnShowPac
-		mov pacXCoord, 0
+		mov fixRightTube, 0FFh
+		mov pacXCoord, 54
 		mov pacYCoord, 14
+		call ShowPac
 		jmp ENDCHARCHECK
 
 	TRAVERSERIGHTTUBE:
-		call UnShowPac
-		mov pacXCoord, 54
+		mov fixLeftTube, 0FFh
+		mov pacXCoord, 0
 		mov pacYCoord, 14
+		call ShowPac
 		jmp ENDCHARCHECK
 
 	ENDCHARCHECK:
-		ret
+
+	inc gameClock
+	ret
 
 ControlLoop ENDP
 

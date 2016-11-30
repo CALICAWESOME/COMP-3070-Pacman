@@ -7,9 +7,9 @@ INCLUDE Irvine32.inc
 	pacYCoord db 23				; byte used to hold the Y-coordinate of PacMan
 	pacChar1 db ">"
 	pacChar2 db "'"
-	multiple dd ?
 	moveInst dd MovePacLeft		; holds address of movePacman instruction to execute
-	moveCache dd MovePacLeft
+	moveCache dd MovePacLeft	; holds backup movement instruction in case moveInst is not possible
+	score dd 0
 
 	theMap	db "788888888888888888888888889 788888888888888888888888889",0
 			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4",0
@@ -41,7 +41,7 @@ INCLUDE Irvine32.inc
 			db "4 . 78888888883 1888889 . 4 4 . 7888883 18888888889 . 4",0
 			db "4 . 1888888888888888883 . 183 . 1888888888888888883 . 4",0
 			db "4 . . . . . . . . . . . . . . . . . . . . . . . . . . 4",0
-			db "1888888888888888888888888888888888888888888888888888883",0
+			db "1888888888888888888888888888888888888888888888888888883 "
 						
 
 .code
@@ -108,6 +108,8 @@ DrawMap PROC uses eax
 		call WriteChar
 		inc esi
 		loop DRAWMAPLOOP
+
+		jmp ENDDRAWMAP
 
 	PRINTWALL7:
 		mov eax, 9
@@ -440,8 +442,10 @@ ControlLoop PROC uses eax
 
 	mov edx, 100
 	call Gotoxy
+	mov eax, score
+	call WriteDec
+
 	call ReadKey
-	call WriteHex
 
 	cmp eax, 4B00h		; on left arrow key press
 	je MOVELEFT
@@ -475,19 +479,62 @@ ControlLoop PROC uses eax
 
 	TRYMOVE:
 		mov eax, moveInst
-		call NEAR PTR eax
-		cmp ebx, 1
-		je PACCANTGOTHERE
+		call NEAR PTR eax	; Try executing moveInst
+		cmp ebx, 1			; If moveInst failed
+		je PACCANTGOTHERE	; Pacman can't go there
 
-		mov eax, moveInst
-		mov moveCache, eax
-		jmp ENDCONTROLLOOP
+		mov eax, moveInst	; Move desired instruction back into eax
+		mov moveCache, eax	; Movement succeeded, store the movement we just made in moveCache
+		jmp ENDMOVEMENT		; you did it
 
 	PACCANTGOTHERE:
-		mov eax, moveCache
-		call NEAR PTR eax
+		mov eax, moveCache	; move the cached movement into eax (we know it will execute because it was stored in the cache in the first place, see above)
+		call NEAR PTR eax	; DOIT
 
-	ENDCONTROLLOOP:
+	ENDMOVEMENT:
+
+	movzx eax, pacYCoord
+	movzx ebx, pacXCoord
+	call CheckPos
+	mov edx, " "
+
+	cmp al, "."
+	je SCOREDOT
+
+	cmp al, "O"
+	je SCOREBIGDOT
+
+	cmp al, ">"
+	je TRAVERSELEFTTUBE
+
+	cmp al, "<"
+	je TRAVERSERIGHTTUBE
+
+	jmp ENDCHARCHECK
+
+	SCOREDOT:
+		add score, 10
+		mov [esi], dl
+		jmp ENDCHARCHECK
+
+	SCOREBIGDOT:
+		add score, 50
+		mov [esi], edx
+		jmp ENDCHARCHECK
+
+	TRAVERSELEFTTUBE:
+		call UnShowPac
+		mov pacXCoord, 0
+		mov pacYCoord, 14
+		jmp ENDCHARCHECK
+
+	TRAVERSERIGHTTUBE:
+		call UnShowPac
+		mov pacXCoord, 54
+		mov pacYCoord, 14
+		jmp ENDCHARCHECK
+
+	ENDCHARCHECK:
 		ret
 
 ControlLoop ENDP

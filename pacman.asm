@@ -2,7 +2,8 @@ INCLUDE Irvine32.inc
 
 .data
 
-	mapSize dd 1736
+	gameoverMessage db "Pacman is kill. You suck.",0
+	mapSize dd 1736				; TODO: un-hardcode this
 	pacXCoord db 28				; byte used to hold the X-coordinate of PacMan
 	pacYCoord db 23				; byte used to hold the Y-coordinate of PacMan
 	pacChar1 db ">"
@@ -11,9 +12,12 @@ INCLUDE Irvine32.inc
 	moveCache dd MovePacLeft	; holds backup movement instruction in case moveInst is not possible
 	fixRightTube db 0
 	fixLeftTube db 0
+	gameIsOver db 0
 
-	G1XCoord db 22
-	G1YCoord db 14
+	G1XCoord db 26
+	G1YCoord db 11
+	G1moveInst dd MoveG1Up	; holds address of movePacman instruction to execute
+	G1moveCache dd MoveG1Up	; holds backup movement instruction in case moveInst is not possible
 
 	score dd 0
 	gameClock dd 0
@@ -59,15 +63,21 @@ main PROC
 	call DrawMap
 	call ShowPac
 	call ShowG1
+	mov eax, 100
+	call Delay
+	call MoveG1Left
+	call MoveG1Up
 
 	LOOPME:
 		call ControlLoop
+		cmp gameIsOver, 0FFh
+		je GAMEOVERDUDE
 		mov eax, 100
 		call Delay
 		jmp LOOPME
-	mov dl, 0
-	mov dh, 31
-	call GoToXY
+
+	GAMEOVERDUDE:
+		call GameOver
 
 	exit
 
@@ -81,129 +91,10 @@ DrawMap PROC uses eax
 	DRAWMAPLOOP:
 		mov eax, 0
 		mov al, [esi]
-		
-		cmp al, "7"
-		je PRINTWALL7
 
-		cmp al, "9"
-		je PRINTWALL9
-
-		cmp al, "1"
-		je PRINTWALL1
-
-		cmp al, "3"
-		je PRINTWALL3
-
-		cmp al, "8"
-		je PRINTWALL8
-
-		cmp al, "4"
-		je PRINTWALL4
-
-		cmp al, "."
-		je PRINTDOT
-
-		cmp al, "O"
-		je PRINTBIGDOT
-
-		cmp al, "_"
-		je PRINTGATE
-
-		cmp al, 0
-		je CARRIAGERETURN
-
-		mov eax, " "
-		call WriteChar
+		call DrawWhatYouSee
 		inc esi
 		loop DRAWMAPLOOP
-
-		jmp ENDDRAWMAP
-
-	PRINTWALL7:
-		mov eax, 9
-		call SetTextColor
-		mov eax, 201
-		call WriteChar
-		inc esi
-		loop DRAWMAPLOOP
-
-	PRINTWALL9:
-		mov eax, 9
-		call SetTextColor
-		mov eax, 187
-		call WriteChar
-		inc esi
-		dec ecx				; do a loop jump manually
-		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
-
-	PRINTWALL1:
-		mov eax, 9
-		call SetTextColor
-		mov eax, 200
-		call WriteChar
-		inc esi
-		dec ecx				; do a loop jump manually
-		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
-
-	PRINTWALL3:
-		mov eax, 9
-		call SetTextColor
-		mov eax, 188
-		call WriteChar
-		inc esi
-		dec ecx				; do a loop jump manually
-		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
-
-	PRINTWALL8:
-		mov eax, 9
-		call SetTextColor
-		mov eax, 205
-		call WriteChar
-		inc esi
-		dec ecx				; do a loop jump manually
-		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
-
-	PRINTWALL4:
-		mov eax, 9
-		call SetTextColor
-		mov eax, 186
-		call WriteChar
-		inc esi
-		dec ecx				; do a loop jump manually
-		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
-
-	PRINTDOT:
-		mov eax, 7
-		call SetTextColor
-		mov eax, 250
-		call WriteChar
-		inc esi
-		dec ecx				; do a loop jump manually
-		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
-
-	PRINTBIGDOT:
-		mov eax, 7
-		call SetTextColor
-		mov eax, 254
-		call WriteChar
-		inc esi
-		dec ecx				; do a loop jump manually
-		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
-
-	PRINTGATE:
-		mov eax, 12
-		call SetTextColor
-		mov eax, 196
-		call WriteChar
-		inc esi
-		dec ecx				; do a loop jump manually
-		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
-
-	CARRIAGERETURN:
-		call crlf
-		inc esi
-		dec ecx				; do a loop jump manually
-		jne DRAWMAPLOOP		; because loop is silly and can only jump -128 to +127 bytes
 
 	ENDDRAWMAP:
 		mov eax, 8
@@ -212,6 +103,196 @@ DrawMap PROC uses eax
 		ret
 
 DrawMap ENDP
+
+DrawWhatYouSee PROC
+
+	cmp al, "7"
+	je PRINTWALL7PLS
+
+	cmp al, "9"
+	je PRINTWALL9PLS
+
+	cmp al, "1"
+	je PRINTWALL1PLS
+
+	cmp al, "3"
+	je PRINTWALL3PLS
+
+	cmp al, "8"
+	je PRINTWALL8PLS
+
+	cmp al, "4"
+	je PRINTWALL4PLS
+
+	cmp al, "."
+	je PRINTDOTPLS
+
+	cmp al, "O"
+	je PRINTBIGDOTPLS
+
+	cmp al, "_"
+	je PRINTGATEPLS
+
+	cmp al, 0
+	je CARRIAGERETURNPLS
+
+	mov eax, " "
+	call WriteChar
+	jmp KEEPDRAWING
+
+	PRINTWALL7PLS:
+		call PrintWall7
+		jmp KEEPDRAWING
+
+	PRINTWALL9PLS:
+		call PrintWall9
+		jmp KEEPDRAWING
+
+	PRINTWALL1PLS:
+		call PrintWall1
+		jmp KEEPDRAWING
+
+	PRINTWALL3PLS:
+		call PrintWall3
+		jmp KEEPDRAWING
+
+	PRINTWALL8PLS:
+		call PrintWall8
+		jmp KEEPDRAWING
+
+	PRINTWALL4PLS:
+		call PrintWall4
+		jmp KEEPDRAWING
+
+	PRINTDOTPLS:
+		call PrintDot
+		jmp KEEPDRAWING
+
+	PRINTBIGDOTPLS:
+		call PrintBigDot
+		jmp KEEPDRAWING
+
+	PRINTGATEPLS:
+		call PrintGate
+		jmp KEEPDRAWING
+
+	CARRIAGERETURNPLS:
+		call CarriageReturn
+
+	KEEPDRAWING:
+
+	ret
+
+DrawWhatYouSee ENDP
+
+PrintWall7 PROC
+
+	mov eax, 9
+	call SetTextColor
+	mov eax, 201
+	call WriteChar
+	
+	ret
+
+PrintWall7 ENDP
+
+PrintWall9 PROC
+
+	mov eax, 9
+	call SetTextColor
+	mov eax, 187
+	call WriteChar
+		
+	ret
+
+PrintWall9 ENDP
+
+PrintWall1 PROC
+
+	mov eax, 9
+	call SetTextColor
+	mov eax, 200
+	call WriteChar
+	
+	ret
+
+PrintWall1 ENDP
+
+PrintWall3 PROC
+
+	mov eax, 9
+	call SetTextColor
+	mov eax, 188
+	call WriteChar
+	
+	ret
+
+PrintWall3 ENDP
+
+PrintWall8 PROC
+
+	mov eax, 9
+	call SetTextColor
+	mov eax, 205
+	call WriteChar
+	
+	ret
+
+PrintWall8 ENDP
+
+PrintWall4 PROC
+
+	mov eax, 9
+	call SetTextColor
+	mov eax, 186
+	call WriteChar
+	
+	ret
+
+PrintWall4 ENDP
+
+PrintDot PROC
+
+	mov eax, 7
+	call SetTextColor
+	mov eax, 250
+	call WriteChar
+	
+	ret
+
+PrintDot ENDP
+
+PrintBigDot PROC
+	mov eax, 7
+	call SetTextColor
+	mov eax, 254
+	call WriteChar
+	
+	ret
+
+PrintBigDot ENDP
+
+PrintGate PROC
+
+	mov eax, 12
+	call SetTextColor
+	mov eax, 196
+	call WriteChar
+
+	ret
+
+PrintGate ENDP
+
+CarriageReturn PROC
+
+	call crlf
+	
+	ret
+
+CarriageReturn ENDP
+
+; ********************************************************************************************************************************************************************************************************
+; PACMAN MOVEMENT PROCEDURES
 
 ; dl = X-coordinate
 ; dh = Y-coordinate
@@ -236,24 +317,6 @@ ShowPac PROC uses edx
 	ret
 
 ShowPac ENDP
-
-ShowG1 PROC
-
-	mov eax, white+(red*16)
-	call SetTextColor
-
-	mov dl, G1XCoord
-	mov dh, G1YCoord
-	call Gotoxy
-
-	mov eax, 248
-	call WriteChar
-	call WriteChar
-
-	mov eax, 0Fh
-	call SetTextColor
-
-ShowG1 ENDP
 
 ; takes current x and y coords of PacMan and sets that coord to a space
 
@@ -398,6 +461,254 @@ MovePacRight PROC uses edx
 
 MovePacRight ENDP
 
+IsPacKill PROC
+
+	mov al, pacXCoord
+	cmp al, G1XCoord
+	jne HELIVES
+
+	mov al, pacYCoord
+	cmp al, G1YCoord
+	jne HELIVES
+
+	mov gameIsOver, 0FFh
+
+	HELIVES:
+		ret
+
+IsPacKill ENDP
+
+; ********************************************************************************************************************************************************************************************************
+; G1 MOVEMENT PROCEDURES
+
+ShowG1 PROC
+
+	mov eax, white+(red*16)
+	call SetTextColor
+
+	mov dl, G1XCoord
+	mov dh, G1YCoord
+	call Gotoxy
+
+	mov eax, 248
+	call WriteChar
+	call WriteChar
+
+	mov eax, 0Fh
+	call SetTextColor
+
+	ret
+
+ShowG1 ENDP
+
+UnShowG1 PROC
+
+	mov dl, G1XCoord
+	mov dh, G1YCoord
+	call Gotoxy			; move cursor to desired X and Y coordinate
+
+	mov esi, OFFSET theMap
+	movzx eax, G1YCoord
+	movzx ebx, G1XCoord
+	call CheckPos
+	call DrawWhatYouSee
+	inc esi
+	call DrawWhatYouSee
+
+	ret
+
+UnShowG1 ENDP
+
+; move PacMan up one space
+
+MoveG1Up PROC uses edx
+
+	movzx eax, G1YCoord
+	movzx ebx, G1XCoord
+	call CheckAbove
+
+	cmp al, 30h
+	jl CARRYG1UP
+
+	cmp al, 39h
+	jg CARRYG1UP
+
+	mov ebx, 1
+	jmp ENDG1UP
+
+	CARRYG1UP:
+		call UnShowG1
+		dec G1YCoord		; move up 1 Y-coordinate
+
+		call ShowG1
+
+	ENDG1UP:
+		ret
+
+MoveG1Up ENDP
+
+; move G1 down one space
+
+MoveG1Down PROC uses edx
+
+	movzx eax, G1YCoord
+	movzx ebx, G1XCoord
+	call CheckBelow
+
+	cmp al, 30h
+	jl CARRYG1DOWN
+
+	cmp al, 5Fh
+	je ENDG1DOWN
+
+	cmp al, 39h
+	jg CARRYG1DOWN
+
+	mov ebx, 1
+	jmp ENDG1DOWN
+
+	CARRYG1DOWN:
+		call UnShowG1
+		inc G1YCoord		; move down 1 Y-coordinate
+
+		call ShowG1
+
+	ENDG1DOWN:
+		ret
+
+MoveG1Down ENDP
+
+; move G1 left one space
+
+MoveG1Left PROC uses edx
+
+	movzx eax, G1YCoord
+	movzx ebx, G1XCoord
+	call CheckLeft
+
+	cmp al, 30h
+	jl CARRYONG1LEFT
+
+	cmp al, 39h
+	jg CARRYONG1LEFT
+
+	mov ebx, 1
+	jmp ENDG1LEFT
+
+	CARRYONG1LEFT:
+		call UnShowG1
+		sub G1XCoord, 2	; move left 1 X-coordinate
+
+		call ShowG1
+	
+	ENDG1LEFT:
+		ret
+
+MoveG1Left ENDP
+
+; move G1 right one space
+
+MoveG1Right PROC uses edx
+
+	movzx eax, G1YCoord
+	movzx ebx, G1XCoord
+	call CheckRight
+
+	cmp al, 30h
+	jl CARRYONG1RIGHT
+
+	cmp al, 39h
+	jg CARRYONG1RIGHT
+
+	mov ebx, 1
+	jmp ENDG1RIGHT
+
+	CARRYONG1RIGHT:
+		call UnShowG1
+		add G1XCoord, 2	; move right 1 X-coordinate
+
+		call ShowG1
+
+	ENDG1RIGHT:
+		ret
+
+MoveG1Right ENDP
+
+G1Think PROC
+
+	mov eax, 3
+	call RandomRange
+
+	cmp eax, 0
+	je G1CLOCKWISE
+
+	cmp eax, 1
+	je G1COUNTERCLK
+
+	jmp TRYG1MOVE
+
+	G1CLOCKWISE:
+		cmp G1MoveCache, OFFSET MoveG1Up
+		je G1GORIGHT
+
+		cmp G1MoveCache, OFFSET MoveG1Right
+		je G1GODOWN
+
+		cmp G1MoveCache, OFFSET MoveG1Down
+		je G1GOLEFT
+
+		cmp G1MoveCache, OFFSET MoveG1Left
+		je G1GOUP
+
+	G1COUNTERCLK:
+		cmp G1MoveCache, OFFSET MoveG1Up
+		je G1GOLEFT
+
+		cmp G1MoveCache, OFFSET MoveG1Right
+		je G1GOUP
+
+		cmp G1MoveCache, OFFSET MoveG1Down
+		je G1GORIGHT
+
+		cmp G1MoveCache, OFFSET MoveG1Left
+		je G1GODOWN
+
+	G1GOUP:
+		mov G1MoveInst, OFFSET MoveG1Up
+		jmp TRYG1MOVE
+
+	G1GORIGHT:
+		mov G1moveInst, OFFSET MoveG1Right
+		jmp TRYG1MOVE
+
+	G1GODOWN:
+		mov G1MoveInst, OFFSET MoveG1Down
+		jmp TRYG1MOVE
+
+	G1GOLEFT:
+		mov G1MoveInst, OFFSET MoveG1Left
+		jmp TRYG1MOVE
+
+	TRYG1MOVE:
+		mov eax, G1moveInst
+		call NEAR PTR eax		; Try executing G1moveInst
+		cmp ebx, 1				; If G1moveInst failed
+		je G1CANTGOTHERE		; G1 can't go there
+
+		mov eax, G1moveInst		; Move desired instruction back into eax
+		mov G1moveCache, eax	; Movement succeeded, store the movement we just made in moveCache
+		ret						; you did it
+
+	G1CANTGOTHERE:
+		mov eax, G1moveCache	; move the cached movement into eax (we know it will execute because it was stored in the cache in the first place, see above)
+		call NEAR PTR eax		; DOIT
+
+	ret
+
+G1Think ENDP
+
+; ********************************************************************************************************************************************************************************************************
+
 ; eax = y coordinate
 ; ebx = x coordinate
 
@@ -471,6 +782,8 @@ ControlLoop PROC uses eax
 	mov eax, score
 	call WriteDec
 
+	call IsPacKill
+
 	cmp fixLeftTube, 0FFh
 	jne DONTFIXLEFT
 	mov dl, 54
@@ -541,6 +854,8 @@ ControlLoop PROC uses eax
 
 	ENDMOVEMENT:
 
+	call G1Think
+
 	movzx eax, pacYCoord
 	movzx ebx, pacXCoord
 	call CheckPos
@@ -590,5 +905,16 @@ ControlLoop PROC uses eax
 	ret
 
 ControlLoop ENDP
+
+GameOver PROC
+
+	call ClrScr
+	mov edx, OFFSET gameoverMessage
+	call WriteString
+	call crlf
+
+	ret
+
+GameOver ENDP
 
 end main

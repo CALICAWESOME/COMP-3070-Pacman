@@ -4,6 +4,7 @@ INCLUDE Irvine32.inc
 
 	gameoverMessage db "Pacman is kill. You suck.",0
 	mapSize dd 1736				; TODO: un-hardcode this
+	splashSize dd 3570			; TODO: also un-hardcode this maybe
 	pacXCoord db 28				; byte used to hold the X-coordinate of PacMan
 	pacYCoord db 23				; byte used to hold the Y-coordinate of PacMan
 	pacChar1 db ">"
@@ -18,6 +19,7 @@ INCLUDE Irvine32.inc
 	G1YCoord db 11
 	G1moveInst dd MoveG1Up	; holds address of movePacman instruction to execute
 	G1moveCache dd MoveG1Up	; holds backup movement instruction in case moveInst is not possible
+	G1options dd 0,0,0
 
 	score dd 0
 	gameClock dd 0
@@ -25,7 +27,7 @@ INCLUDE Irvine32.inc
 	theMap	db "788888888888888888888888889 788888888888888888888888889",0
 			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4",0
 			db "4 . 7888889 . 788888889 . 4 4 . 788888889 . 7888889 . 4",0
-			db "4 O 4     4 . 4       4 . 4 4 . 4       4 . 4     4 O 4",0
+			db "4 ~ 4     4 . 4       4 . 4 4 . 4       4 . 4     4 ~ 4",0
 			db "4 . 1888883 . 188888883 . 183 . 188888883 . 1888883 . 4",0
 			db "4 . . . . . . . . . . . . . . . . . . . . . . . . . . 4",0
 			db "4 . 7888889 . 789 . 788888888888889 . 789 . 7888889 . 4",0
@@ -45,7 +47,7 @@ INCLUDE Irvine32.inc
 			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4",0
 			db "4 . 7888889 . 788888889 . 4 4 . 788888889 . 7888889 . 4",0
 			db "4 . 18889 4 . 188888883 . 183 . 188888883 . 4 78883 . 4",0
-			db "4 O . . 4 4 . . . . . . .     . . . . . . . 4 4 . . O 4",0
+			db "4 ~ . . 4 4 . . . . . . .     . . . . . . . 4 4 . . ~ 4",0
 			db "18889 . 4 4 . 789 . 788888888888889 . 789 . 4 4 . 78883",0
 			db "78883 . 183 . 4 4 . 1888889 7888883 . 4 4 . 183 . 18889",0
 			db "4 . . . . . . 4 4 . . . . 4 4 . . . . 4 4 . . . . . . 4",0
@@ -55,11 +57,51 @@ INCLUDE Irvine32.inc
 			db "1888888888888888888888888888888888888888888888888888883 "
 						
 
+	splash db " ~ 789 789 789 789 789 789 789 789 789 789 788888888888888888888888888888889 789 789 789 789 789 789 789 789 789 789 ~", 0
+		   db " 783 183 183 183 183 183 183 183 183 183 183 wBobby Martin & Jared Conroy  183 183 183 183 183 183 183 183 183 183 189", 0
+		   db " 189 7888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888889 783", 0
+		   db " 783 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4 189", 0
+		   db " 189 4 . 78889 . 7888888888888888888888888888888888888888888888888888888888888888888888888888888888889 . 78889 . 4 783", 0
+		   db " 783 4 . 4   4 . 4                                                                                   4 . 4   4 . 4 189", 0
+		   db " 189 4 . 4   4 . 4    @5555555      5         55555          5         5       5       5    5555     4 . 4   4 . 4 783", 0
+		   db " 783 4 . 4   4 . 4    @22222222Z   222      222222226        225     522      222      225  2222     4 . 4   4 . 4 189", 0
+		   db " 189 4 . 4   4 . 4    @22222222Z  22222    2222266     5225  22225 52222     22222     222252222     4 . 4   4 . 4 783", 0
+		   db " 783 4 . 4   4 . 4    @2222666   2222222   2222255     6226  22222222222    2222222    222222222     4 . 4   4 . 4 189", 0
+		   db " 189 4 . 4   4 . 4    @2222     222222222   222222225        22222222222   222222222   222222222     4 . 4   4 . 4 783", 0
+		   db " 783 4 . 4   4 . 4    @6666    66666666666    66666          66666666666  66666666666  666666666     4 . 4   4 . 4 189", 0
+		   db " 189 4 . 4   4 . 4                                                                                   4 . 4   4 . 4 783", 0
+		   db " 783 4 . 18883 . 1888888888888888888888888888888888888888888888888888888888888888888888888888888888883 . 18883 . 4 189", 0
+		   db " 189 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4 783", 0
+		   db " 783 4 . 78889 . 788888888888888888888888888888_________________________888888888888888888888888888889 . 78889 . 4 189", 0
+		   db " 189 4 . 4   4 . 4                                                                                   4 . 4   4 . 4 783", 0
+		   db " 783 4 . 4   4 . 4                                |    @5/?5/?5                                      4 . 4   4 . 4 189", 0
+		   db " 189 4 . 4   4 . 4      =52225        p52225     ||   @22)22)222          ^52225        g52225       4 . 4   4 . 4 783", 0
+		   db " 783 4 . 4   4 . 4      =u+u+2        pu+u+2     @65 5Q225c25262Z65       ^2+v+v        g2+v+v       4 . 4   4 . 4 189", 0
+		   db " 189 4 . 4   4 . 4      =22222        p22222       @6  25      2  56      ^22222        g22222       4 . 4   4 . 4 783", 0
+		   db " 783 4 . 4   4 . 4      =26262        p26262           @625$$56||6        ^26262        g26262       4 . 4   4 . 4 189", 0
+		   db " 189 4 . 18883 . 4                                        #  #                                       4 . 18883 . 4 783", 0
+		   db " 783 4 . . . . . 4      =INKY         pPINKY           =522  225          ^BLINKY       gCLYDE       4 . . . . . 4 189", 0
+		   db " 189 4 . 78889 . 4                                                                                   4 . 78889 . 4 783", 0
+		   db " 783 4 . 18883 . 1888888888888888888888888888888888888888888888888888888888888888888888888888888888883 . 18883 . 4 189", 0
+		   db " 189 4 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4 783", 0
+		   db " 783 1888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888883 189", 0
+		   db " 189 789 789 789 789 789 789 789 789 789 789 789wPRESS ANY KEY TO PLAY 789 789 789 789 789 789 789 789 789 789 789 783", 0
+		   db " ~ 183 183 183 183 183 183 183 183 183 183 183 1888888888888888888888883 183 183 183 183 183 183 183 183 183 183 183 ~ "
+
 .code
 
 main PROC
 
 	call Randomize
+	call DrawSplash
+	SPLASHSCRN:
+		call ReadKey
+		cmp eax, 1
+		jne STARTGAME
+		jmp SPLASHSCRN
+
+	STARTGAME:
+	call clrscr
 	call DrawMap
 	call ShowPac
 	call ShowG1
@@ -104,6 +146,26 @@ DrawMap PROC uses eax
 
 DrawMap ENDP
 
+DrawSplash PROC uses eax
+
+mov ecx, splashSize; TODO: un - hardcode this
+mov esi, OFFSET splash
+
+DRAWSPLASHLOOP:
+	mov eax, 0
+	mov al, [esi]
+
+	call DrawWhatYouSee
+	inc esi
+	loop DRAWSPLASHLOOP
+
+	mov eax, 8
+	call SetTextColor
+
+	ret
+
+DrawSPLASH ENDP
+
 DrawWhatYouSee PROC
 
 	cmp al, "7"
@@ -124,11 +186,74 @@ DrawWhatYouSee PROC
 	cmp al, "4"
 	je PRINTWALL4PLS
 
+	cmp al, "2"
+	je PRINTBLOCKPLS
+
+	cmp al, "5"
+	je PRINTBOTTOMBLOCKPLS
+
+	cmp al, "6"
+	je PRINTTOPBLOCKPLS
+
+	cmp al, "Z"
+	je PRINTLEFTBLOCKPLS
+
+	cmp al, "Q"
+	je PRINTRIGHTBLOCKPLS
+
+	cmp al, "$"
+	je PRINTTONGUEPLS
+
+	cmp al, "#"
+	je PRINTLEGPLS
+
+	cmp al, ")"
+	je PRINTEYEPLS
+
+	cmp al, "@"
+	je SETYELLOW
+
+	cmp al, "^"
+	je SETCYAN
+
+	cmp al, "g"
+	je SETGREEN
+
+	cmp al, "="
+	je SETRED
+
+	cmp al, "p"
+	je SETMAGENTA
+
+	cmp al, "w"
+	je SETWHITE
+
 	cmp al, "."
 	je PRINTDOTPLS
 
-	cmp al, "O"
+	cmp al, "~"
 	je PRINTBIGDOTPLS
+
+	cmp al, "c"
+	je PRINTNOSEPLS
+
+	cmp al, "/"
+	je PRINTBROWUPPLS
+
+	cmp al, "?"
+	je PRINTBROWDOWNPLS
+
+	cmp al, "|"
+	je PRINTGLOVEPLS
+
+	cmp al, "+"
+	je PRINTOPLS
+
+	cmp al, "u"
+	je PRINTEYELEFTPLS
+
+	cmp al, "v"
+	je PRINTEYERIGHTPLS
 
 	cmp al, "_"
 	je PRINTGATEPLS
@@ -136,9 +261,78 @@ DrawWhatYouSee PROC
 	cmp al, 0
 	je CARRIAGERETURNPLS
 
-	mov eax, " "
+	cmp al, " "
+	je PRINTSPACEPLS
+
 	call WriteChar
 	jmp KEEPDRAWING
+
+	PRINTSPACEPLS:
+		mov eax, " "
+		call WriteChar
+		jmp KEEPDRAWING
+
+	SETYELLOW:
+		mov eax, 14
+		call SetTextColor
+		jmp PRINTSPACEPLS
+
+	SETCYAN :
+		mov eax, 11
+		call SetTextColor
+		jmp PRINTSPACEPLS
+
+	SETRED :
+		mov eax, 12
+		call SetTextColor
+		jmp PRINTSPACEPLS
+
+	SETMAGENTA :
+		mov eax, 13
+		call SetTextColor
+		jmp PRINTSPACEPLS
+
+	SETGREEN :
+		mov eax, 10
+		call SetTextColor
+		jmp PRINTSPACEPLS
+		
+	SETWHITE :
+		mov eax, 15
+		call SetTextColor
+		jmp PRINTSPACEPLS
+
+	PRINTNOSEPLS :
+		call PrintNose
+		jmp KEEPDRAWING
+
+	PRINTTONGUEPLS :
+		call PrintTongue
+		jmp KEEPDRAWING
+
+	PRINTLEGPLS :
+		call PrintLeg
+		jmp KEEPDRAWING
+
+	PRINTEYEPLS :
+		call PrintEye
+		jmp KEEPDRAWING
+
+	PRINTGLOVEPLS :
+		call PrintGlove
+		jmp KEEPDRAWING
+
+	PRINTOPLS :
+		call PrintO
+		jmp KEEPDRAWING
+
+	PRINTEYELEFTPLS :
+		call PrintEyeLeft
+		jmp KEEPDRAWING
+
+	PRINTEYERIGHTPLS :
+		call PrintEyeRight
+		jmp KEEPDRAWING
 
 	PRINTWALL7PLS:
 		call PrintWall7
@@ -164,6 +358,34 @@ DrawWhatYouSee PROC
 		call PrintWall4
 		jmp KEEPDRAWING
 
+	PRINTBLOCKPLS:
+		call PrintBlock
+		jmp KEEPDRAWING
+
+	PRINTTOPBLOCKPLS :
+		call PrintTopBlock
+		jmp KEEPDRAWING
+
+	PRINTBOTTOMBLOCKPLS :
+		call PrintBottomBlock
+		jmp KEEPDRAWING
+
+	PRINTLEFTBLOCKPLS :
+		call PrintLeftBlock
+		jmp KEEPDRAWING
+
+	PRINTRIGHTBLOCKPLS :
+		call PrintRightBlock
+		jmp KEEPDRAWING
+
+	PRINTBROWUPPLS :
+		call PrintBrowUp
+		jmp KEEPDRAWING
+
+	PRINTBROWDOWNPLS :
+		call PrintBrowDown
+		jmp KEEPDRAWING
+
 	PRINTDOTPLS:
 		call PrintDot
 		jmp KEEPDRAWING
@@ -184,6 +406,177 @@ DrawWhatYouSee PROC
 	ret
 
 DrawWhatYouSee ENDP
+
+PrintNose PROC
+
+	mov eax, 14*16
+	call SetTextColor
+	mov eax, 67
+	call WriteChar
+	mov eax, 14 ; reset to yellow
+	call SetTextColor
+
+	ret
+
+PrintNose ENDP
+
+PrintGlove PROC
+
+	mov eax, 4
+	call SetTextColor
+	mov eax, 219
+	call WriteChar
+
+	ret
+
+PrintGlove ENDP
+
+PrintO PROC
+
+	Call GetTextColor
+	mov bl, al
+	mov eax, 3+(15*16)
+	Call SetTextColor
+	mov eax, 223
+	call WriteChar
+	mov al, bl
+	call SetTextColor
+
+	ret
+
+PrintO ENDP
+
+PrintEyeLeft PROC
+	
+	Call GetTextColor
+	add eax, (16*15)
+	Call SetTextColor
+	mov eax, 221
+	call WriteChar
+	call GetTextColor
+	sub eax, (16*15)
+	call SetTextColor
+
+	ret
+
+PrintEyeLeft ENDP
+
+PrintEyeRight PROC
+
+	Call GetTextColor
+	add eax, (16 * 15)
+	Call SetTextColor
+	mov eax, 222
+	call WriteChar
+	call GetTextColor
+	sub eax, (16 * 15)
+	call SetTextColor
+
+	ret
+
+PrintEyeRight ENDP
+
+PrintTongue PROC
+
+	mov eax, 14 + (12 * 16)
+	call SetTextColor
+	mov eax, 220
+	call WriteChar
+	mov eax, 14; reset to yellow
+	call SetTextColor
+
+	ret
+
+PrintTongue ENDP
+
+PrintLeg PROC
+
+	mov eax, 12 + (14 * 16)
+	call SetTextColor
+	mov eax, 220
+	call WriteChar
+	mov eax, 14; reset to yellow
+	call SetTextColor
+
+	ret
+
+PrintLeg ENDP
+
+PrintEye PROC
+
+	mov eax, 62
+	call WriteChar
+
+	ret
+
+PrintEye endp
+
+PrintBrowUp PROC
+
+	mov eax, 14*16
+	call SetTextColor
+	mov eax, 47
+	call WriteChar
+
+	ret
+
+PrintBrowUp ENDP
+
+PrintBrowDown PROC
+
+	mov eax, 92
+	Call WriteChar
+	mov eax, 14; reset to yellow
+	call SetTextColor
+
+	ret
+
+PrintBrowDown ENDP
+
+PrintBlock PROC
+
+	mov eax, 219
+	call WriteChar
+
+	ret
+
+PrintBlock ENDP
+
+PrintTopBlock PROC
+
+	mov eax, 223
+	call WriteChar
+
+	ret
+
+PrintTopBlock ENDP
+
+PrintBottomBlock PROC
+
+	mov eax, 220
+	call WriteChar
+
+	ret
+
+PrintBottomBlock ENDP
+
+PrintLeftBlock PROC
+
+	mov eax, 221
+	call WriteChar
+
+	ret
+
+PrintLeftBlock ENDP
+
+PrintRightBlock PROC
+
+	mov eax, 222
+	call WriteChar
+
+	ret
+
+PrintRightBlock ENDP
 
 PrintWall7 PROC
 
@@ -513,6 +906,7 @@ UnShowG1 PROC
 	call CheckPos
 	call DrawWhatYouSee
 	inc esi
+	mov al, [esi]
 	call DrawWhatYouSee
 
 	ret
@@ -667,7 +1061,7 @@ G1Think PROC
 		cmp G1MoveCache, OFFSET MoveG1Right
 		je G1GOUP
 
-		cmp G1MoveCache, OFFSET MoveG1Down
+		cmp G1MoveCache, OFFSET MoveG1Down 
 		je G1GORIGHT
 
 		cmp G1MoveCache, OFFSET MoveG1Left
@@ -781,8 +1175,6 @@ ControlLoop PROC uses eax
 	call Gotoxy
 	mov eax, score
 	call WriteDec
-
-	call IsPacKill
 
 	cmp fixLeftTube, 0FFh
 	jne DONTFIXLEFT
@@ -900,6 +1292,8 @@ ControlLoop PROC uses eax
 		jmp ENDCHARCHECK
 
 	ENDCHARCHECK:
+
+	call IsPacKill
 
 	inc gameClock
 	ret

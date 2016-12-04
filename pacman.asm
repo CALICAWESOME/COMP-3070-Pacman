@@ -17,9 +17,17 @@ INCLUDE Irvine32.inc
 
 	G1XCoord db 26
 	G1YCoord db 11
-	G1moveInst dd MoveG1Up	; holds address of movePacman instruction to execute
-	G1moveCache dd MoveG1Up	; holds backup movement instruction in case moveInst is not possible
+	G1moveInst dd MoveG1Left	; holds address of movePacman instruction to execute
+	G1moveCache dd MoveG1Left	; holds backup movement instruction in case moveInst is not possible
 	G1options dd 0,0,0
+	G1NumOpts db 0
+
+	G2XCoord db 28
+	G2YCoord db 11
+	G2moveInst dd MoveG2Right	; holds address of movePacman instruction to execute
+	G2moveCache dd MoveG2Right	; holds backup movement instruction in case moveInst is not possible
+	G2options dd 0,0,0
+	G2NumOpts db 0
 
 	score dd 0
 	gameClock dd 0
@@ -105,10 +113,9 @@ main PROC
 	call DrawMap
 	call ShowPac
 	call ShowG1
+	call ShowG2
 	mov eax, 100
 	call Delay
-	call MoveG1Left
-	call MoveG1Up
 
 	LOOPME:
 		call ControlLoop
@@ -257,6 +264,12 @@ DrawWhatYouSee PROC
 
 	cmp al, "_"
 	je PRINTGATEPLS
+
+	cmp al, ">"
+	je PRINTSPACEPLS
+
+	cmp al, "<"
+	je PRINTSPACEPLS
 
 	cmp al, 0
 	je CARRIAGERETURNPLS
@@ -735,23 +748,17 @@ MovePacUp PROC uses edx
 	movzx ebx, pacXCoord
 	call CheckAbove
 
-	cmp al, 30h
-	jl CARRYONUP
+	call CanIGoHere
+	cmp ebx, 1
+	je ENDUP
+	
+	call UnShowPac
 
-	cmp al, 39h
-	jg CARRYONUP
+	mov pacChar1, 'v'
+	mov pacChar2, ':'
+	dec PacYCoord		; move up 1 Y-coordinate
 
-	mov ebx, 1
-	jmp ENDUP
-
-	CARRYONUP:
-		call UnShowPac
-
-		mov pacChar1, 'v'
-		mov pacChar2, ':'
-		dec PacYCoord		; move up 1 Y-coordinate
-
-		call ShowPac
+	call ShowPac
 
 	ENDUP:
 		ret
@@ -766,17 +773,9 @@ MovePacDown PROC uses edx
 	movzx ebx, pacXCoord
 	call CheckBelow
 
-	cmp al, 30h
-	jl CARRYONDOWN
-
-	cmp al, 5Fh
+	call CanIGoHere
+	cmp ebx, 1
 	je ENDDOWN
-
-	cmp al, 39h
-	jg CARRYONDOWN
-
-	mov ebx, 1
-	jmp ENDDOWN
 
 	CARRYONDOWN:
 		call UnShowPac
@@ -800,14 +799,9 @@ MovePacLeft PROC uses edx
 	movzx ebx, pacXCoord
 	call CheckLeft
 
-	cmp al, 30h
-	jl CARRYONLEFT
-
-	cmp al, 39h
-	jg CARRYONLEFT
-
-	mov ebx, 1
-	jmp ENDLEFT
+	call CanIGoHere
+	cmp ebx, 1
+	je ENDLEFT
 
 	CARRYONLEFT:
 		call UnShowPac
@@ -831,14 +825,9 @@ MovePacRight PROC uses edx
 	movzx ebx, pacXCoord
 	call CheckRight
 
-	cmp al, 30h
-	jl CARRYONRIGHT
-
-	cmp al, 39h
-	jg CARRYONRIGHT
-
-	mov ebx, 1
-	jmp ENDRIGHT
+	call CanIGoHere
+	cmp ebx, 1
+	je ENDRIGHT
 
 	CARRYONRIGHT:
 		call UnShowPac
@@ -857,14 +846,30 @@ MovePacRight ENDP
 IsPacKill PROC
 
 	mov al, pacXCoord
+	mov bl, pacYCoord
+	
 	cmp al, G1XCoord
-	jne HELIVES
+	jne SAFEFROMG1
 
-	mov al, pacYCoord
-	cmp al, G1YCoord
-	jne HELIVES
+	cmp bl, G1YCoord
+	jne SAFEFROMG1
 
-	mov gameIsOver, 0FFh
+	jmp HEDEAD
+
+	SAFEFROMG1:
+		cmp al, G2XCoord
+		jne SAFEFROMG2
+
+		cmp bl, G2YCoord
+		jne SAFEFROMG2
+
+		jmp HEDEAD
+
+	SAFEFROMG2:
+		jmp HELIVES
+
+	HEDEAD:
+		mov gameIsOver, 0FFh
 
 	HELIVES:
 		ret
@@ -876,7 +881,7 @@ IsPacKill ENDP
 
 ShowG1 PROC
 
-	mov eax, white+(red*16)
+	mov eax, white+(lightred*16)
 	call SetTextColor
 
 	mov dl, G1XCoord
@@ -921,14 +926,9 @@ MoveG1Up PROC uses edx
 	movzx ebx, G1XCoord
 	call CheckAbove
 
-	cmp al, 30h
-	jl CARRYG1UP
-
-	cmp al, 39h
-	jg CARRYG1UP
-
-	mov ebx, 1
-	jmp ENDG1UP
+	call CanIGoHere
+	cmp ebx, 1
+	je ENDG1UP
 
 	CARRYG1UP:
 		call UnShowG1
@@ -949,17 +949,9 @@ MoveG1Down PROC uses edx
 	movzx ebx, G1XCoord
 	call CheckBelow
 
-	cmp al, 30h
-	jl CARRYG1DOWN
-
-	cmp al, 5Fh
+	call CanIGoHere
+	cmp ebx, 1
 	je ENDG1DOWN
-
-	cmp al, 39h
-	jg CARRYG1DOWN
-
-	mov ebx, 1
-	jmp ENDG1DOWN
 
 	CARRYG1DOWN:
 		call UnShowG1
@@ -980,14 +972,9 @@ MoveG1Left PROC uses edx
 	movzx ebx, G1XCoord
 	call CheckLeft
 
-	cmp al, 30h
-	jl CARRYONG1LEFT
-
-	cmp al, 39h
-	jg CARRYONG1LEFT
-
-	mov ebx, 1
-	jmp ENDG1LEFT
+	call CanIGoHere
+	cmp ebx, 1
+	je ENDG1LEFT
 
 	CARRYONG1LEFT:
 		call UnShowG1
@@ -1008,14 +995,9 @@ MoveG1Right PROC uses edx
 	movzx ebx, G1XCoord
 	call CheckRight
 
-	cmp al, 30h
-	jl CARRYONG1RIGHT
-
-	cmp al, 39h
-	jg CARRYONG1RIGHT
-
-	mov ebx, 1
-	jmp ENDG1RIGHT
+	call CanIGoHere
+	cmp ebx, 1
+	je ENDG1RIGHT
 
 	CARRYONG1RIGHT:
 		call UnShowG1
@@ -1030,60 +1012,89 @@ MoveG1Right ENDP
 
 G1Think PROC
 
-	mov eax, 3
-	call RandomRange
+	mov edi, OFFSET G1Options
+	mov G1NumOpts, 0
 
-	cmp eax, 0
-	je G1CLOCKWISE
-
-	cmp eax, 1
-	je G1COUNTERCLK
-
-	jmp TRYG1MOVE
-
-	G1CLOCKWISE:
-		cmp G1MoveCache, OFFSET MoveG1Up
-		je G1GORIGHT
-
-		cmp G1MoveCache, OFFSET MoveG1Right
-		je G1GODOWN
-
+	G1TRYUP:
 		cmp G1MoveCache, OFFSET MoveG1Down
-		je G1GOLEFT
+		je G1TRYDOWN
 
-		cmp G1MoveCache, OFFSET MoveG1Left
-		je G1GOUP
+		movzx eax, G1YCoord
+		movzx ebx, G1XCoord
+		call CheckAbove
+		call CanIGoHere
+		cmp ebx, 1
+		je G1TRYDOWN
 
-	G1COUNTERCLK:
+		mov [edi], OFFSET MoveG1Up
+		add edi, 4
+		inc G1NumOpts
+
+	G1TRYDOWN:
 		cmp G1MoveCache, OFFSET MoveG1Up
-		je G1GOLEFT
+		je G1TRYLEFT
 
+		movzx eax, G1YCoord
+		movzx ebx, G1XCoord
+		call CheckBelow
+		call CanIGoHere
+		cmp ebx, 1
+		je G1TRYLEFT
+
+		mov [edi], OFFSET MoveG1Down
+		add edi, 4
+		inc G1NumOpts
+
+	G1TRYLEFT:
 		cmp G1MoveCache, OFFSET MoveG1Right
-		je G1GOUP
+		je G1TRYRIGHT
 
-		cmp G1MoveCache, OFFSET MoveG1Down 
-		je G1GORIGHT
+		movzx eax, G1YCoord
+		movzx ebx, G1XCoord
+		call CheckLeft
+		call CanIGoHere
+		cmp ebx, 1
+		je G1TRYRIGHT
 
+		mov [edi], OFFSET MoveG1Left
+		add edi, 4
+		inc G1NumOpts
+
+	G1TRYRIGHT:
 		cmp G1MoveCache, OFFSET MoveG1Left
-		je G1GODOWN
+		je G1PREDECISION
 
-	G1GOUP:
-		mov G1MoveInst, OFFSET MoveG1Up
-		jmp TRYG1MOVE
+		movzx eax, G1YCoord
+		movzx ebx, G1XCoord
+		call CheckRight
+		call CanIGoHere
+		cmp ebx, 1
+		je G1PREDECISION
 
-	G1GORIGHT:
-		mov G1moveInst, OFFSET MoveG1Right
-		jmp TRYG1MOVE
+		mov [edi], OFFSET MoveG1Right
+		add edi, 4
+		inc G1NumOpts
 
-	G1GODOWN:
-		mov G1MoveInst, OFFSET MoveG1Down
-		jmp TRYG1MOVE
+	G1PREDECISION:
+		cmp G1NumOpts, 0
+		jne G1DECIDE
 
-	G1GOLEFT:
-		mov G1MoveInst, OFFSET MoveG1Left
-		jmp TRYG1MOVE
+		inc G1NumOpts
+		mov eax, G1MoveCache
+		mov G1options, eax
+
+	G1DECIDE:
+		movzx eax, G1NumOpts
+		call RandomRange
+		mov bl, 4
+		mul bl
+		mov esi, OFFSET G1Options
+		add esi, eax
+		mov eax, [esi]
+		mov G1MoveInst, eax
 
 	TRYG1MOVE:
+		mov eax, OFFSET MoveG1Up
 		mov eax, G1moveInst
 		call NEAR PTR eax		; Try executing G1moveInst
 		cmp ebx, 1				; If G1moveInst failed
@@ -1097,9 +1108,303 @@ G1Think PROC
 		mov eax, G1moveCache	; move the cached movement into eax (we know it will execute because it was stored in the cache in the first place, see above)
 		call NEAR PTR eax		; DOIT
 
-	ret
+	movzx eax, G1YCoord
+	movzx ebx, G1XCoord
+	call CheckPos
+
+	cmp al, ">"
+	je G1TRAVERSERIGHTTUBE
+
+	cmp al, "<"
+	je G1TRAVERSELEFTTUBE
+
+	jmp G1ENDCHARCHECK
+
+	G1TRAVERSELEFTTUBE:
+		mov fixRightTube, 0FFh
+		mov fixLeftTube, 0ffh
+		mov G1XCoord, 54
+		mov G1YCoord, 14
+		call ShowG1
+		jmp G1ENDCHARCHECK
+
+	G1TRAVERSERIGHTTUBE:
+		mov fixRightTube, 0FFh
+		mov fixLeftTube, 0ffh
+		mov G1XCoord, 0
+		mov G1YCoord, 14
+		call ShowG1
+		jmp G1ENDCHARCHECK
+
+	G1ENDCHARCHECK:
+		ret
 
 G1Think ENDP
+
+; ********************************************************************************************************************************************************************************************************
+; G2 MOVEMENT PROCEDURES
+
+ShowG2 PROC
+
+	mov eax, white+(13*16)
+	call SetTextColor
+
+	mov dl, G2XCoord
+	mov dh, G2YCoord
+	call Gotoxy
+
+	mov eax, 248
+	call WriteChar
+	call WriteChar
+
+	mov eax, 0Fh
+	call SetTextColor
+
+	ret
+
+ShowG2 ENDP
+
+UnShowG2 PROC
+
+	mov dl, G2XCoord
+	mov dh, G2YCoord
+	call Gotoxy			; move cursor to desired X and Y coordinate
+
+	mov esi, OFFSET theMap
+	movzx eax, G2YCoord
+	movzx ebx, G2XCoord
+	call CheckPos
+	call DrawWhatYouSee
+	inc esi
+	mov al, [esi]
+	call DrawWhatYouSee
+
+	ret
+
+UnShowG2 ENDP
+
+; move PacMan up one space
+
+MoveG2Up PROC uses edx
+
+	movzx eax, G2YCoord
+	movzx ebx, G2XCoord
+	call CheckAbove
+
+	call CanIGoHere
+	cmp ebx, 1
+	je ENDG2UP
+
+	CARRYG2UP:
+		call UnShowG2
+		dec G2YCoord		; move up 1 Y-coordinate
+
+		call ShowG2
+
+	ENDG2UP:
+		ret
+
+MoveG2Up ENDP
+
+; move G2 down one space
+
+MoveG2Down PROC uses edx
+
+	movzx eax, G2YCoord
+	movzx ebx, G2XCoord
+	call CheckBelow
+
+	call CanIGoHere
+	cmp ebx, 1
+	je ENDG2DOWN
+
+	CARRYG2DOWN:
+		call UnShowG2
+		inc G2YCoord		; move down 1 Y-coordinate
+
+		call ShowG2
+
+	ENDG2DOWN:
+		ret
+
+MoveG2Down ENDP
+
+; move G2 left one space
+
+MoveG2Left PROC uses edx
+
+	movzx eax, G2YCoord
+	movzx ebx, G2XCoord
+	call CheckLeft
+
+	call CanIGoHere
+	cmp ebx, 1
+	je ENDG2LEFT
+
+	CARRYONG2LEFT:
+		call UnShowG2
+		sub G2XCoord, 2	; move left 1 X-coordinate
+
+		call ShowG2
+	
+	ENDG2LEFT:
+		ret
+
+MoveG2Left ENDP
+
+; move G2 right one space
+
+MoveG2Right PROC uses edx
+
+	movzx eax, G2YCoord
+	movzx ebx, G2XCoord
+	call CheckRight
+
+	call CanIGoHere
+	cmp ebx, 1
+	je ENDG2RIGHT
+
+	CARRYONG2RIGHT:
+		call UnShowG2
+		add G2XCoord, 2	; move right 1 X-coordinate
+
+		call ShowG2
+
+	ENDG2RIGHT:
+		ret
+
+MoveG2Right ENDP
+
+G2Think PROC
+
+	mov edi, OFFSET G2Options
+	mov G2NumOpts, 0
+
+	G2TRYUP:
+		cmp G2MoveCache, OFFSET MoveG2Down
+		je G2TRYDOWN
+
+		movzx eax, G2YCoord
+		movzx ebx, G2XCoord
+		call CheckAbove
+		call CanIGoHere
+		cmp ebx, 1
+		je G2TRYDOWN
+
+		mov [edi], OFFSET MoveG2Up
+		add edi, 4
+		inc G2NumOpts
+
+	G2TRYDOWN:
+		cmp G2MoveCache, OFFSET MoveG2Up
+		je G2TRYLEFT
+
+		movzx eax, G2YCoord
+		movzx ebx, G2XCoord
+		call CheckBelow
+		call CanIGoHere
+		cmp ebx, 1
+		je G2TRYLEFT
+
+		mov [edi], OFFSET MoveG2Down
+		add edi, 4
+		inc G2NumOpts
+
+	G2TRYLEFT:
+		cmp G2MoveCache, OFFSET MoveG2Right
+		je G2TRYRIGHT
+
+		movzx eax, G2YCoord
+		movzx ebx, G2XCoord
+		call CheckLeft
+		call CanIGoHere
+		cmp ebx, 1
+		je G2TRYRIGHT
+
+		mov [edi], OFFSET MoveG2Left
+		add edi, 4
+		inc G2NumOpts
+
+	G2TRYRIGHT:
+		cmp G2MoveCache, OFFSET MoveG2Left
+		je G2PREDECISION
+
+		movzx eax, G2YCoord
+		movzx ebx, G2XCoord
+		call CheckRight
+		call CanIGoHere
+		cmp ebx, 1
+		je G2PREDECISION
+
+		mov [edi], OFFSET MoveG2Right
+		add edi, 4
+		inc G2NumOpts
+
+	G2PREDECISION:
+		cmp G2NumOpts, 0
+		jne G2DECIDE
+
+		inc G2NumOpts
+		mov eax, G2MoveCache
+		mov G2options, eax
+
+	G2DECIDE:
+		movzx eax, G2NumOpts
+		call RandomRange
+		mov bl, 4
+		mul bl
+		mov esi, OFFSET G2Options
+		add esi, eax
+		mov eax, [esi]
+		mov G2MoveInst, eax
+
+	TRYG2MOVE:
+		mov eax, OFFSET MoveG2Up
+		mov eax, G2moveInst
+		call NEAR PTR eax		; Try executing G2moveInst
+		cmp ebx, 1				; If G2moveInst failed
+		je G2CANTGOTHERE		; G2 can't go there
+
+		mov eax, G2moveInst		; Move desired instruction back into eax
+		mov G2moveCache, eax	; Movement succeeded, store the movement we just made in moveCache
+		ret						; you did it
+
+	G2CANTGOTHERE:
+		mov eax, G2moveCache	; move the cached movement into eax (we know it will execute because it was stored in the cache in the first place, see above)
+		call NEAR PTR eax		; DOIT
+
+	movzx eax, G2YCoord
+	movzx ebx, G2XCoord
+	call CheckPos
+
+	cmp al, ">"
+	je G2TRAVERSERIGHTTUBE
+
+	cmp al, "<"
+	je G2TRAVERSELEFTTUBE
+
+	jmp G2ENDCHARCHECK
+
+	G2TRAVERSELEFTTUBE:
+		mov fixRightTube, 0FFh
+		mov fixLeftTube, 0ffh
+		mov G2XCoord, 54
+		mov G2YCoord, 14
+		call ShowG2
+		jmp G2ENDCHARCHECK
+
+	G2TRAVERSERIGHTTUBE:
+		mov fixRightTube, 0FFh
+		mov fixLeftTube, 0ffh
+		mov G2XCoord, 0
+		mov G2YCoord, 14
+		call ShowG2
+		jmp G2ENDCHARCHECK
+
+	G2ENDCHARCHECK:
+		ret
+
+G2Think ENDP
 
 ; ********************************************************************************************************************************************************************************************************
 
@@ -1169,6 +1474,57 @@ CheckPos PROC
 
 CheckPos ENDP
 
+; eax = character to check
+
+CanIGoHere PROC
+
+	cmp al, 30h
+	jl YEAHYOUCAN
+
+	cmp al, 5Fh
+	je NOYOUCANT
+
+	cmp al, 39h
+	jg YEAHYOUCAN
+
+	NOYOUCANT:
+
+	mov ebx, 1
+
+	YEAHYOUCAN:
+
+	ret
+
+CanIGoHere ENDP
+
+FixLeftTubePls PROC
+
+	mov dl, 54
+	mov dh, 14
+	call Gotoxy
+	mov eax, " "
+	call WriteChar
+	call WriteChar
+	mov fixLeftTube, 0
+
+	ret
+
+FixLeftTubePls ENDP
+
+FixRightTubePls PROC
+
+	mov dl, 0
+	mov dh, 14
+	call Gotoxy
+	mov eax, " "
+	call WriteChar
+	call WriteChar
+	mov fixRightTube, 0
+
+	ret
+
+FixRightTubePls ENDP
+
 ControlLoop PROC uses eax
 
 	mov edx, 100
@@ -1178,24 +1534,12 @@ ControlLoop PROC uses eax
 
 	cmp fixLeftTube, 0FFh
 	jne DONTFIXLEFT
-	mov dl, 54
-	mov dh, 14
-	call Gotoxy
-	mov eax, " "
-	call WriteChar
-	call WriteChar
-	mov fixLeftTube, 0
+	call FixLeftTubePls
 	DONTFIXLEFT:
 
 	cmp fixRightTube, 0FFh
 	jne DONTFIXRIGHT
-	mov dl, 0
-	mov dh, 14
-	call Gotoxy
-	mov eax, " "
-	call WriteChar
-	call WriteChar
-	mov fixRightTube, 0
+	call FixRightTubePls
 	DONTFIXRIGHT:
 
 	call ReadKey
@@ -1246,7 +1590,10 @@ ControlLoop PROC uses eax
 
 	ENDMOVEMENT:
 
+	call IsPacKill
+
 	call G1Think
+	call G2Think
 
 	movzx eax, pacYCoord
 	movzx ebx, pacXCoord
@@ -1279,13 +1626,15 @@ ControlLoop PROC uses eax
 
 	TRAVERSELEFTTUBE:
 		mov fixRightTube, 0FFh
+		mov fixLeftTube, 0ffh
 		mov pacXCoord, 54
 		mov pacYCoord, 14
 		call ShowPac
 		jmp ENDCHARCHECK
 
 	TRAVERSERIGHTTUBE:
-		mov fixLeftTube, 0FFh
+		mov fixRightTube, 0FFh
+		mov fixLeftTube, 0ffh
 		mov pacXCoord, 0
 		mov pacYCoord, 14
 		call ShowPac

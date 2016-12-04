@@ -3,8 +3,9 @@ INCLUDE Irvine32.inc
 .data
 
 	gameoverMessage db "Pacman is kill. You suck.",0
-	mapSize dd 1736				; TODO: un-hardcode this
+	mapSize dd 3720				; TODO: un-hardcode this
 	splashSize dd 3570			; TODO: also un-hardcode this maybe
+	endSize dd 3570				; TODO: also un - hardcode this perhaps
 	pacXCoord db 28				; byte used to hold the X-coordinate of PacMan
 	pacYCoord db 23				; byte used to hold the Y-coordinate of PacMan
 	pacChar1 db ">"
@@ -32,37 +33,37 @@ INCLUDE Irvine32.inc
 	score dd 0
 	gameClock dd 0
 
-	theMap	db "788888888888888888888888889 788888888888888888888888889",0
-			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4",0
-			db "4 . 7888889 . 788888889 . 4 4 . 788888889 . 7888889 . 4",0
-			db "4 ~ 4     4 . 4       4 . 4 4 . 4       4 . 4     4 ~ 4",0
-			db "4 . 1888883 . 188888883 . 183 . 188888883 . 1888883 . 4",0
-			db "4 . . . . . . . . . . . . . . . . . . . . . . . . . . 4",0
-			db "4 . 7888889 . 789 . 788888888888889 . 789 . 7888889 . 4",0
-			db "4 . 1888883 . 4 4 . 1888889 7888883 . 4 4 . 1888883 . 4",0
-			db "4 . . . . . . 4 4 . . . . 4 4 . . . . 4 4 . . . . . . 4",0
-			db "18888888889 . 4 1888889   4 4   7888883 4 . 78888888883",0
-			db "          4 . 4 7888883   183   1888889 4 . 4          ",0
-			db "          4 . 4 4                     4 4 . 4          ",0
-			db "          4 . 4 4   78888_____88889   4 4 . 4          ",0
-			db "88888888883 . 183   4             4   183 . 18888888888",0
-			db "<           .       4             4       .           >",0
-			db "88888888889 . 789   4             4   789 . 78888888888",0
-			db "          4 . 4 4   188888888888883   4 4 . 4          ",0
-			db "          4 . 4 4                     4 4 . 4          ",0
-			db "          4 . 4 4   788888888888889   4 4 . 4          ",0
-			db "78888888883 . 183   1888889 7888883   183 . 18888888889",0
-			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4",0
-			db "4 . 7888889 . 788888889 . 4 4 . 788888889 . 7888889 . 4",0
-			db "4 . 18889 4 . 188888883 . 183 . 188888883 . 4 78883 . 4",0
-			db "4 ~ . . 4 4 . . . . . . .     . . . . . . . 4 4 . . ~ 4",0
-			db "18889 . 4 4 . 789 . 788888888888889 . 789 . 4 4 . 78883",0
-			db "78883 . 183 . 4 4 . 1888889 7888883 . 4 4 . 183 . 18889",0
-			db "4 . . . . . . 4 4 . . . . 4 4 . . . . 4 4 . . . . . . 4",0
-			db "4 . 78888888883 1888889 . 4 4 . 7888883 18888888889 . 4",0
-			db "4 . 1888888888888888883 . 183 . 1888888888888888883 . 4",0
-			db "4 . . . . . . . . . . . . . . . . . . . . . . . . . . 4",0
-			db "1888888888888888888888888888888888888888888888888888883 "
+	theMap	db "788888888888888888888888889 788888888888888888888888889 788888888888888888888888888888888888888888888888888888888888889", 0
+			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4 4wSCORE:                                                LVL   4", 0
+			db "4 . 7888889 . 788888889 . 4 4 . 788888889 . 7888889 . 4 188888888888888888888888888888888888888888888888888888888888883", 0
+			db "4 ~ 4     4 . 4       4 . 4 4 . 4       4 . 4     4 ~ 4   @555555     5        5555    5       5      5      5    555  ", 0
+			db "4 . 1888883 . 188888883 . 183 . 188888883 . 1888883 . 4   @2222222   222     22222266  225   522     222     225  222  ", 0
+			db "4 . . . . . . . . . . . . . . . . . . . . . . . . . . 4   @2222226  22222   Q2222      222252222    22222    22225222  ", 0
+			db "4 . 7888889 . 789 . 788888888888889 . 789 . 7888889 . 4   @222     2222222   22222255  222222222   2222222   22222222  ", 0
+			db "4 . 1888883 . 4 4 . 1888889 7888883 . 4 4 . 1888883 . 4   @666    666666666    6666    666666666  666666666  66666666  ", 0
+			db "4 . . . . . . 4 4 . . . . 4 4 . . . . 4 4 . . . . . . 4 788888888888888888888888888888888888888888888888888888888888889", 0
+			db "18888888889 . 4 1888889   4 4   7888883 4 . 78888888883 4wRULES:                                                      4", 0
+			db "          4 . 4 7888883   183   1888889 4 . 4           4                                                             4", 0
+			db "          4 . 4 4                     4 4 . 4           4w- USE THE ARROW KEYS TO MOVE PACMAN                         4", 0
+			db "          4 . 4 4   78888_____88889   4 4 . 4           4w- DON'T MAKE CONTACT WITH THE GHOSTS                        4", 0
+			db "88888888883 . 183   4             4   183 . 18888888888 4w- EAT ALL THE DOTS TO MOVE TO THE NEXT LEVEL                4", 0
+			db "<           .       4             4       .           > 188888888888888888888888888888888888888888888888888888888888883", 0
+			db "88888888889 . 789   4             4   789 . 78888888888                                                                ", 0
+			db "          4 . 4 4   188888888888883   4 4 . 4                                                                          ", 0
+			db "          4 . 4 4                     4 4 . 4                                                                          ", 0
+			db "          4 . 4 4   788888888888889   4 4 . 4                                                                          ", 0
+			db "78888888883 . 183   1888889 7888883   183 . 18888888889                                                                ", 0
+			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4                                                                ", 0
+			db "4 . 7888889 . 788888889 . 4 4 . 788888889 . 7888889 . 4                                                                ", 0
+			db "4 . 18889 4 . 188888883 . 183 . 188888883 . 4 78883 . 4                                                                ", 0
+			db "4 ~ . . 4 4 . . . . . . .     . . . . . . . 4 4 . . ~ 4                                                                ", 0
+			db "18889 . 4 4 . 789 . 788888888888889 . 789 . 4 4 . 78883                                                7888888888888889", 0
+			db "78883 . 183 . 4 4 . 1888889 7888883 . 4 4 . 183 . 18889            @5555       5555       5555         4wVALUE:       4", 0
+			db "4 . . . . . . 4 4 . . . . 4 4 . . . . 4 4 . . . . . . 4          @22222266   22222266   22222266       4              4", 0
+			db "4 . 78888888883 1888889 . 4 4 . 7888883 18888888889 . 4  wLIVES:@Q2222      Q2222      Q2222           4 . w!0 POINTS 4", 0
+			db "4 . 1888888888888888883 . 183 . 1888888888888888883 . 4          @22222255   22222255   22222255       4 ~ wf0 POINTS 4", 0
+			db "4 . . . . . . . . . . . . . . . . . . . . . . . . . . 4            @6666       6666       6666         4=%w!00 POINTS 4", 0
+			db "1888888888888888888888888888888888888888888888888888883                                                1888888888888883"
 						
 
 	splash db " ~ 789 789 789 789 789 789 789 789 789 789 788888888888888888888888888888889 789 789 789 789 789 789 789 789 789 789 ~", 0
@@ -95,6 +96,37 @@ INCLUDE Irvine32.inc
 		   db " 783 1888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888883 189", 0
 		   db " 189 789 789 789 789 789 789 789 789 789 789 789wPRESS ANY KEY TO PLAY 789 789 789 789 789 789 789 789 789 789 789 783", 0
 		   db " ~ 183 183 183 183 183 183 183 183 183 183 183 1888888888888888888888883 183 183 183 183 183 183 183 183 183 183 183 ~ "
+
+	endScreen db " ~ 789 789 789 789 789 789 789 789 789 789 788888888888888888888888888888889 789 789 789 789 789 789 789 789 789 789 ~", 0
+			  db " 783 183 183 183 183 183 183 183 183 183 183 wBobby Martin & Jared Conroy  183 183 183 183 183 183 183 183 183 183 189", 0
+			  db " 189                                                                                                               783", 0
+			  db " 783                                                                                                               189", 0
+			  db " 189                                                                                                               783", 0
+			  db " 783                                                                                                               189", 0
+			  db " 189                                                                                                               783", 0
+			  db " 783                  =222222   22222  222    222 2222222      222222  22    22 2222222 222222                     189", 0
+			  db " 189                 =22       22   22 2222  2222 22          22    22 22    22 22      22   22                    783", 0
+			  db " 783                 =22   222 2222222 22 2222 22 22222       22    22 22    22 22222   222222                     189", 0
+			  db " 189                 =22    22 22   22 22  22  22 22          22    22  22  22  22      22   22                    783", 0
+			  db " 783                  =222222  22   22 22      22 2222222      222222    2222   2222222 22   22                    189", 0
+			  db " 189                                                                                                               783", 0
+			  db " 783                                           wYOU MADE IT TO LEVEL                                               189", 0
+			  db " 189                                               wWITH A SCORE OF                                                783", 0
+			  db " 783                                                                                                               189", 0
+			  db " 189                                                                                                               783", 0
+			  db " 783                                                                                                               189", 0
+			  db " 189                                                   @55555555                                                   783", 0
+			  db " 783                                                 @222222222226                                                 189", 0
+			  db " 189                                                @2222k22266                                                    783", 0
+			  db " 783                                               @Q2222s2                                                        189", 0
+			  db " 189                                                @222qsz2255                                                    783", 0
+			  db " 783                                                 @222x22222225                                                 189", 0
+			  db " 189                                                   @66666666                                                   783", 0
+			  db " 783                                                                                                               189", 0
+			  db " 189                                                                                                               783", 0
+			  db " 783                                                                                                               189", 0
+			  db " 189 789 789 789 789 789 789 789 789 789 789 789wPRESS ANY KEY TO EXIT 789 789 789 789 789 789 789 789 789 789 789 783", 0
+			  db " ~ 183 183 183 183 183 183 183 183 183 183 183 1888888888888888888888883 183 183 183 183 183 183 183 183 183 183 183 ~", 0
 
 .code
 
@@ -262,14 +294,32 @@ DrawWhatYouSee PROC
 	cmp al, "v"
 	je PRINTEYERIGHTPLS
 
+	cmp al, "f"
+	je PRINTFIVEPLS
+
+	cmp al, "!"
+	je PRINTONEPLS
+
 	cmp al, "_"
 	je PRINTGATEPLS
 
-	cmp al, ">"
-	je PRINTSPACEPLS
+	cmp al, "k"
+	je PRINTPACEYEPLS
 
-	cmp al, "<"
-	je PRINTSPACEPLS
+	cmp al, "m"
+	je PRINTTOPTEARPLS
+
+	cmp al, "s"
+	je PRINTMIDDLETEARPLS
+
+	cmp al, "q"
+	je PRINTLEFTTEARPLS
+
+	cmp al, "z"
+	je PRINTRIGHTTEARPLS
+
+	cmp al, "x"
+	je PRINTBOTTOMTEARPLS
 
 	cmp al, 0
 	je CARRIAGERETURNPLS
@@ -280,12 +330,12 @@ DrawWhatYouSee PROC
 	call WriteChar
 	jmp KEEPDRAWING
 
-	PRINTSPACEPLS:
+	PRINTSPACEPLS :
 		mov eax, " "
 		call WriteChar
 		jmp KEEPDRAWING
 
-	SETYELLOW:
+	SETYELLOW :
 		mov eax, 14
 		call SetTextColor
 		jmp PRINTSPACEPLS
@@ -309,11 +359,35 @@ DrawWhatYouSee PROC
 		mov eax, 10
 		call SetTextColor
 		jmp PRINTSPACEPLS
-		
+	
 	SETWHITE :
 		mov eax, 15
 		call SetTextColor
 		jmp PRINTSPACEPLS
+
+	PRINTPACEYEPLS :
+		call PrintPacEye
+		jmp KEEPDRAWING
+
+	PRINTTOPTEARPLS :
+		call PrintTopTear
+		jmp KEEPDRAWING
+
+	PRINTMIDDLETEARPLS :
+		call PrintMiddleTear
+		jmp KEEPDRAWING
+
+	PRINTLEFTTEARPLS :
+		call PrintLeftTear
+		jmp KEEPDRAWING
+
+	PRINTRIGHTTEARPLS :
+		call PrintRightTear
+		jmp KEEPDRAWING
+
+	PRINTBOTTOMTEARPLS :
+		call PrintBottomTear
+		jmp KEEPDRAWING
 
 	PRINTNOSEPLS :
 		call PrintNose
@@ -339,6 +413,14 @@ DrawWhatYouSee PROC
 		call PrintO
 		jmp KEEPDRAWING
 
+	PRINTFIVEPLS:
+		call PrintFive
+		jmp KEEPDRAWING
+
+	PRINTONEPLS:
+		call PrintOne
+		jmp KEEPDRAWING
+
 	PRINTEYELEFTPLS :
 		call PrintEyeLeft
 		jmp KEEPDRAWING
@@ -347,31 +429,31 @@ DrawWhatYouSee PROC
 		call PrintEyeRight
 		jmp KEEPDRAWING
 
-	PRINTWALL7PLS:
+	PRINTWALL7PLS :
 		call PrintWall7
 		jmp KEEPDRAWING
 
-	PRINTWALL9PLS:
+	PRINTWALL9PLS :
 		call PrintWall9
-		jmp KEEPDRAWING
+		jmp	KEEPDRAWING
 
-	PRINTWALL1PLS:
+	PRINTWALL1PLS :
 		call PrintWall1
 		jmp KEEPDRAWING
 
-	PRINTWALL3PLS:
+	PRINTWALL3PLS :
 		call PrintWall3
 		jmp KEEPDRAWING
 
-	PRINTWALL8PLS:
+	PRINTWALL8PLS :
 		call PrintWall8
 		jmp KEEPDRAWING
 
-	PRINTWALL4PLS:
+	PRINTWALL4PLS :
 		call PrintWall4
 		jmp KEEPDRAWING
 
-	PRINTBLOCKPLS:
+	PRINTBLOCKPLS :
 		call PrintBlock
 		jmp KEEPDRAWING
 
@@ -399,26 +481,103 @@ DrawWhatYouSee PROC
 		call PrintBrowDown
 		jmp KEEPDRAWING
 
-	PRINTDOTPLS:
+	PRINTDOTPLS :
 		call PrintDot
 		jmp KEEPDRAWING
 
-	PRINTBIGDOTPLS:
+	PRINTBIGDOTPLS :
 		call PrintBigDot
 		jmp KEEPDRAWING
 
-	PRINTGATEPLS:
+	PRINTGATEPLS :
 		call PrintGate
 		jmp KEEPDRAWING
 
-	CARRIAGERETURNPLS:
+	CARRIAGERETURNPLS :
 		call CarriageReturn
 
-	KEEPDRAWING:
+	KEEPDRAWING :
+		ret
+
+DrawWhatYouSee ENDP
+
+PrintPacEye PROC
+
+	mov eax, 14*16
+	call SetTextColor
+	mov eax, 223
+	call WriteChar
+	mov eax, 14
+	call SetTextColor
 
 	ret
 
-DrawWhatYouSee ENDP
+PrintPacEye ENDP
+
+PrintTopTear PROC
+
+	mov eax, 11 + (14*16)
+	call SetTextColor
+	mov eax, 220
+	call WriteChar
+	mov eax, 14
+	call SetTextColor
+
+ret
+
+PrintTopTear ENDP
+
+PrintMiddleTear PROC
+
+	mov eax, 11
+	call SetTextColor
+	mov eax, 219
+	call WriteChar
+	mov eax, 14
+	call SetTextColor
+
+	ret
+
+PrintMiddleTear ENDP
+
+PrintLeftTear PROC
+
+	mov eax, 11 + (14 * 16)
+	call SetTextColor
+	mov eax, 222
+	call WriteChar
+	mov eax, 14
+	call SetTextColor
+
+	ret
+
+PrintLeftTear ENDP
+
+PrintRightTear PROC
+
+	mov eax, 11 + (14 * 16)
+	call SetTextColor
+	mov eax, 221
+	call WriteChar
+	mov eax, 14
+	call SetTextColor
+
+	ret
+
+PrintRightTear ENDP
+
+PrintBottomTear PROC
+
+	mov eax, 11 + (14 * 16)
+	call SetTextColor
+	mov eax, 223
+	call WriteChar
+	mov eax, 14
+	call SetTextColor
+
+	ret
+
+PrintBottomTear ENDP
 
 PrintNose PROC
 
@@ -545,6 +704,24 @@ PrintBrowDown PROC
 	ret
 
 PrintBrowDown ENDP
+
+PrintFive PROC
+
+	mov eax, 53
+	call WriteChar
+
+	ret
+
+PrintFive ENDP
+
+PrintOne PROC
+
+	mov eax, 49
+	call WriteChar
+
+	ret
+
+PrintOne ENDP
 
 PrintBlock PROC
 
@@ -1652,9 +1829,20 @@ ControlLoop ENDP
 GameOver PROC
 
 	call ClrScr
-	mov edx, OFFSET gameoverMessage
-	call WriteString
-	call crlf
+	mov ecx, endSize; TODO: un - hardcode this
+	mov esi, OFFSET endScreen
+
+	DRAWENDLOOP:
+		mov eax, 0
+		mov al, [esi]
+	
+		call DrawWhatYouSee
+		inc esi
+		loop DRAWENDLOOP
+
+	ENDDRAWEND :
+		mov eax, 8
+		call SetTextColor
 
 	ret
 

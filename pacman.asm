@@ -1,8 +1,10 @@
 INCLUDE Irvine32.inc
+ 
+include \masm32\include\winmm.inc
+includelib \masm32\lib\winmm.lib
 
 .data
 
-	gameoverMessage db "Pacman is kill. You suck.",0
 	mapTempSize dd 1736
 	mapSize dd 3719				; TODO: un-hardcode this
 	splashSize dd 3570			; TODO: also un-hardcode this maybe
@@ -47,9 +49,15 @@ INCLUDE Irvine32.inc
 
 	score dd 0
 	level dd 1
+	lives db 3
 	dotsEaten db 0
 	gameClock dd 0
 	wallColor db 9
+	shouldWaka db 0
+
+	beginSound BYTE "C:\Irvine\pacman_beginning.wav", 0
+	endSound BYTE "C:\Irvine\pacman_death.wav", 0
+	wakaSound BYTE "C:\Irvine\waka.wav", 0
 
 	mapTemp	db "788888888888888888888888889 788888888888888888888888889 788888888888888888888888888888888888888888888888888888888888889", 0
 			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4 4wSCORE:                                                LVL   4", 0
@@ -157,19 +165,19 @@ INCLUDE Irvine32.inc
 			  db " 783                  =222222   22222  222    222 2222222      222222  22    22 2222222 222222                     189", 0
 			  db " 189                 =22       22   22 2222  2222 22          22    22 22    22 22      22   22                    783", 0
 			  db " 783                 =22   222 2222222 22 2222 22 22222       22    22 22    22 22222   222222                     189", 0
-			  db " 189                 =22    22 22   22 22  22  22 22          22    22  22  22  22      22   22                    783", 0
+  			  db " 189                 =22    22 22   22 22  22  22 22          22    22  22  22  22      22   22                    783", 0
 			  db " 783                  =222222  22   22 22      22 2222222      222222    2222   2222222 22   22                    189", 0
 			  db " 189                                                                                                               783", 0
-			  db " 783                                           wYOU MADE IT TO LEVEL                                               189", 0
-			  db " 189                                               wWITH A SCORE OF                                                783", 0
+			  db " 783                        wYOU MADE IT TO LEVEL                    WITH A SCORE OF                               189", 0
+			  db " 189                                                                                                               783", 0
 			  db " 783                                                                                                               189", 0
 			  db " 189                                                                                                               783", 0
 			  db " 783                                                                                                               189", 0
 			  db " 189                                                   @55555555                                                   783", 0
 			  db " 783                                                 @222222222226                                                 189", 0
 			  db " 189                                                @2222k22266                                                    783", 0
-			  db " 783                                               @Q2222s2                                                        189", 0
-			  db " 189                                                @222qsz2255                                                    783", 0
+			  db " 783                                               @Q2222x2                                                        189", 0
+			  db " 189                                                @2222x22255                                                    783", 0
 			  db " 783                                                 @222x22222225                                                 189", 0
 			  db " 189                                                   @66666666                                                   783", 0
 			  db " 783                                                                                                               189", 0
@@ -188,14 +196,14 @@ main PROC
 		call ReadKey
 		cmp eax, 1
 		jne STARTGAME
+		mov eax, 10
+		call Delay
 		jmp SPLASHSCRN
 
 	STARTGAME:
 	call clrscr
 	call DrawMap
 	call SetupGame
-	mov eax, 100
-	call Delay
 
 	LOOPME:
 		call ControlLoop
@@ -206,6 +214,7 @@ main PROC
 		jmp LOOPME
 
 	GAMEOVERDUDE:
+		invoke sndPlaySound, offset endSound, 0000
 		call GameOver
 
 	exit
@@ -215,9 +224,14 @@ main ENDP
 SetupGame PROC
 
 	mov moveInst, OFFSET MovePacLeft
-	mov moveInst, OFFSET MovePacLeft
-	mov dotsEaten, 0
+	mov moveCache, OFFSET MovePacLeft
 	mov gameClock, 0
+
+	call UnShowPac
+	call UnShowG1
+	call UnShowG2
+	call UnShowG3
+	call UnShowG4
 
 	mov pacXCoord, 28
 	mov pacYCoord, 23
@@ -240,8 +254,7 @@ SetupGame PROC
 	call ShowG3
 	call ShowG4
 
-	mov eax, 1000
-	call delay
+	invoke sndPlaySound, offset beginSound, 0000
 
 	ret
 
@@ -261,6 +274,14 @@ DrawMap PROC uses eax
 		loop DRAWMAPLOOP
 
 	ENDDRAWMAP:
+		mov eax, 15
+		call SetTextColor
+		mov dh, 1
+		mov dl, 116
+		call Gotoxy
+		mov eax, level
+		call writeDec
+
 		mov eax, 8
 		call SetTextColor
 
@@ -1120,7 +1141,7 @@ IsPacKill PROC
 	cmp bl, G1YCoord
 	jne SAFEFROMG1
 
-	jmp HEDEAD
+	jmp YOUGOTCAUGHT
 
 	SAFEFROMG1:
 		cmp al, G2XCoord
@@ -1129,7 +1150,7 @@ IsPacKill PROC
 		cmp bl, G2YCoord
 		jne SAFEFROMG2
 
-		jmp HEDEAD
+		jmp YOUGOTCAUGHT
 
 	SAFEFROMG2:
 		cmp al, G3XCoord
@@ -1138,7 +1159,7 @@ IsPacKill PROC
 		cmp bl, G3YCoord
 		jne SAFEFROMG3
 
-		jmp HEDEAD
+		jmp YOUGOTCAUGHT
 
 	SAFEFROMG3:
 		cmp al, G4XCoord
@@ -1147,17 +1168,86 @@ IsPacKill PROC
 		cmp bl, G4YCoord
 		jne HELIVES
 
-		jmp HEDEAD
+		jmp YOUGOTCAUGHT
 
 		jmp HELIVES
 
+	YOUGOTCAUGHT:
+		call PacDeathAnim
+		dec lives
+		cmp lives, -1
+		je HEDEAD
+		call SetupGame
+		jmp HELIVES
+		
 	HEDEAD:
 		mov gameIsOver, 0FFh
+		mov eax, 500
+		call Delay
 
 	HELIVES:
 		ret
 
 IsPacKill ENDP
+
+PacDeathAnim PROC
+
+	mov dl, pacXCoord
+	mov dh, pacYCoord
+	mov ecx, 3
+
+	mov eax, black+(yellow*16)
+	call SetTextColor
+
+	SPINPAC:
+		call GotoXY
+		mov eax, ">"
+		call WriteChar
+		mov eax, "'"
+		call WriteChar
+
+		mov eax, 100
+		call Delay
+
+		call GotoXY
+		call GotoXY
+		mov eax, "V"
+		call WriteChar
+		mov eax, ":"
+		call WriteChar
+
+		mov eax, 100
+		call Delay
+
+		call GotoXY
+		call GotoXY
+		mov eax, "."
+		call WriteChar
+		mov eax, "<"
+		call WriteChar
+
+		mov eax, 100
+		call Delay
+
+		call GotoXY
+		call GotoXY
+		mov eax, ":"
+		call WriteChar
+		mov eax, 239
+		call WriteChar
+
+		mov eax, 100
+		call Delay
+
+		dec ecx
+		jne SPINPAC
+
+	mov eax, 8
+	call SetTextColor
+
+	ret
+
+PacDeathAnim ENDP
 
 ; ********************************************************************************************************************************************************************************************************
 ; G1 MOVEMENT PROCEDURES
@@ -2254,7 +2344,13 @@ G4Think ENDP
 
 ; ********************************************************************************************************************************************************************************************************
 
+ShowCherry PROC
 
+	
+
+	ret
+
+ShowCherry ENDP
 
 ; eax = y coordinate
 ; ebx = x coordinate
@@ -2396,6 +2492,7 @@ NextLevel PROC
 		inc wallColor
 
 	call DrawMap
+	mov dotsEaten, 0
 	call SetupGame
 
 	ret
@@ -2511,16 +2608,29 @@ ControlLoop PROC uses eax
 
 	jmp ENDCHARCHECK
 
-	SCOREDOT:
+	SCOREDOT :
 		add score, 10
 		inc dotsEaten
-		mov [esi], dl
+		mov[esi], dl
+		cmp shouldWaka, 1
+		je doTheWaka
+		inc shouldWaka
 		jmp ENDCHARCHECK
-
-	SCOREBIGDOT:
+ 
+	SCOREBIGDOT :
 		add score, 50
 		inc dotsEaten
-		mov [esi], dl
+		mov[esi], dl
+		cmp shouldWaka, 1
+		je doTheWaka
+		inc shouldWaka
+		jmp ENDCHARCHECK
+ 
+	doTheWaka :
+		invoke sndPlaySound, offset wakaSound, 0001
+		mov eax, 100
+		call delay
+		dec shouldWaka
 		jmp ENDCHARCHECK
 
 	TRAVERSELEFTTUBE:
@@ -2568,12 +2678,14 @@ GameOver PROC
 		inc esi
 		loop DRAWENDLOOP
 
-	mov edx, 0D45h
+	mov eax, 12
+	Call SetTextColor
+	mov edx, 0D32h
 	call GotoXY
 	mov eax, level
 	call WriteDec
 
-	mov edx, 0E44h
+	mov edx, 0D55h
 	call GotoXY
 	mov eax, score
 	call WriteDec
@@ -2581,6 +2693,16 @@ GameOver PROC
 	ENDDRAWEND :
 		mov eax, 8
 		call SetTextColor
+
+	GAMEOVERPRESS:
+		call ReadKey
+		cmp eax, 1
+		jne ENDITALL
+		mov eax, 10
+		call Delay
+		jmp GAMEOVERPRESS
+
+	ENDITALL:
 
 	ret
 

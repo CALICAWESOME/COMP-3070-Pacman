@@ -1194,6 +1194,8 @@ IsPacKill PROC
 		dec lives
 		cmp lives, -1
 		je HEDEAD
+		call ClrScr
+		call DrawMap
 		call SetupGame
 		jmp HELIVES
 		

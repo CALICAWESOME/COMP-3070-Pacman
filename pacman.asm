@@ -47,6 +47,8 @@ includelib \masm32\lib\winmm.lib
 	G4options dd 0,0,0
 	G4NumOpts db 0
 
+	ready db "R E A D Y",0
+	gmover db "G A M E   O V E R",0
 	score dd 0
 	level dd 1
 	lives db 3
@@ -58,6 +60,8 @@ includelib \masm32\lib\winmm.lib
 	beginSound BYTE "C:\Irvine\pacman_beginning.wav", 0
 	endSound BYTE "C:\Irvine\pacman_death.wav", 0
 	wakaSound BYTE "C:\Irvine\waka.wav", 0
+	bigDotSound BYTE "C:\Irvine\bigdot.wav", 0
+	cherrySound BYTE "C:\Irvine\cherry.wav", 0
 
 	mapTemp	db "788888888888888888888888889 788888888888888888888888889 788888888888888888888888888888888888888888888888888888888888889", 0
 			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4 4wSCORE:                                                LVL   4", 0
@@ -214,7 +218,6 @@ main PROC
 		jmp LOOPME
 
 	GAMEOVERDUDE:
-		invoke sndPlaySound, offset endSound, 0000
 		call GameOver
 
 	exit
@@ -226,12 +229,6 @@ SetupGame PROC
 	mov moveInst, OFFSET MovePacLeft
 	mov moveCache, OFFSET MovePacLeft
 	mov gameClock, 0
-
-	call UnShowPac
-	call UnShowG1
-	call UnShowG2
-	call UnShowG3
-	call UnShowG4
 
 	mov pacXCoord, 28
 	mov pacYCoord, 23
@@ -253,9 +250,11 @@ SetupGame PROC
 	call ShowG2
 	call ShowG3
 	call ShowG4
+	call ShowReady
 
 	invoke sndPlaySound, offset beginSound, 0000
 
+	call UnShowReady
 	ret
 
 SetupGame ENDP
@@ -406,6 +405,9 @@ DrawWhatYouSee PROC
 
 	cmp al, "_"
 	je PRINTGATEPLS
+
+	cmp al, "%"
+	je PRINTCHERRYPLS
 
 	cmp al, "<"
 	je PRINTSPACEPLS
@@ -601,6 +603,10 @@ DrawWhatYouSee PROC
 
 	PRINTGATEPLS :
 		call PrintGate
+		jmp KEEPDRAWING
+
+	PRINTCHERRYPLS:
+		call PrintCherry
 		jmp KEEPDRAWING
 
 	CARRIAGERETURNPLS :
@@ -976,6 +982,17 @@ PrintGate PROC
 
 PrintGate ENDP
 
+PrintCherry PROC
+
+	mov eax, 12
+	call SetTextColor
+	mov eax, "%"
+	call WriteChar
+
+	ret
+
+PrintCherry ENDP
+
 CarriageReturn PROC
 
 	call crlf
@@ -1194,53 +1211,56 @@ PacDeathAnim PROC
 
 	mov dl, pacXCoord
 	mov dh, pacYCoord
-	mov ecx, 3
 
 	mov eax, black+(yellow*16)
 	call SetTextColor
 
-	SPINPAC:
-		call GotoXY
-		mov eax, ">"
-		call WriteChar
-		mov eax, "'"
-		call WriteChar
+	call GotoXY
+	mov eax, ">"
+	call WriteChar
+	mov eax, "'"
+	call WriteChar
 
-		mov eax, 100
-		call Delay
+	mov eax, 100
+	call Delay
 
-		call GotoXY
-		call GotoXY
-		mov eax, "V"
-		call WriteChar
-		mov eax, ":"
-		call WriteChar
+	call GotoXY
+	call GotoXY
+	mov eax, "V"
+	call WriteChar
+	mov eax, ":"
+	call WriteChar
 
-		mov eax, 100
-		call Delay
+	mov eax, 100
+	call Delay
 
-		call GotoXY
-		call GotoXY
-		mov eax, "."
-		call WriteChar
-		mov eax, "<"
-		call WriteChar
+	call GotoXY
+	call GotoXY
+	mov eax, "."
+	call WriteChar
+	mov eax, "<"
+	call WriteChar
 
-		mov eax, 100
-		call Delay
+	mov eax, 100
+	call Delay
 
-		call GotoXY
-		call GotoXY
-		mov eax, ":"
-		call WriteChar
-		mov eax, 239
-		call WriteChar
+	call GotoXY
+	call GotoXY
+	mov eax, ":"
+	call WriteChar
+	mov eax, 239
+	call WriteChar
 
-		mov eax, 100
-		call Delay
+	mov eax, 100
+	call Delay
 
-		dec ecx
-		jne SPINPAC
+	call GotoXY
+	mov eax, ">"
+	call WriteChar
+	mov eax, "'"
+	call WriteChar
+
+	invoke sndPlaySound, offset endSound, 0000
 
 	mov eax, 8
 	call SetTextColor
@@ -2346,11 +2366,60 @@ G4Think ENDP
 
 ShowCherry PROC
 
-	
+	mov dh, 17
+	mov dl, 28
+	call GotoXY
+	call PrintCherry
+
+	mov eax, 17
+	mov esi, OFFSET theMap
+	mov ebx, LENGTHOF theMap
+	mul ebx
+	mov ebx, 28
+	add eax, ebx
+	add esi, eax
+	mov bl, "%"
+	mov [esi], bl
+
+	mov eax, 17
+	mov ebx, 28
+	call CheckPos
 
 	ret
 
 ShowCherry ENDP
+
+SHOWREADY PROC
+
+	mov dh, 17
+	mov dl, 23
+	call GotoXY
+	mov eax, 12
+	call SetTextColor
+	mov edx, OFFSET ready
+	call WriteString
+
+	mov eax, 8
+	call SetTextColor
+
+	ret
+
+SHOWREADY ENDP
+
+UNSHOWREADY PROC
+
+	mov dh, 17
+	mov dl, 23
+	call GotoXY
+	mov eax, " "
+	mov ecx, 9
+	UNSHOWTHEREADY:
+		call WriteChar
+		loop UNSHOWTHEREADY
+
+	ret
+
+UNSHOWREADY ENDP
 
 ; eax = y coordinate
 ; ebx = x coordinate
@@ -2491,6 +2560,7 @@ NextLevel PROC
 	DONTLOOPWALLCOLORBACK:
 		inc wallColor
 
+	call clrscr
 	call DrawMap
 	mov dotsEaten, 0
 	call SetupGame
@@ -2505,6 +2575,12 @@ ControlLoop PROC uses eax
 	call Gotoxy
 	mov eax, score
 	call WriteDec
+
+	cmp gameClock, 150
+	jne DONTSHOWCHERRY
+	call ShowCherry
+
+	DONTSHOWCHERRY:
 
 	cmp fixLeftTube, 0FFh
 	jne DONTFIXLEFT
@@ -2600,6 +2676,9 @@ ControlLoop PROC uses eax
 	cmp al, "~"
 	je SCOREBIGDOT
 
+	cmp al, "%"
+	je SCORECHERRY
+
 	cmp al, ">"
 	je TRAVERSERIGHTTUBE
 
@@ -2616,21 +2695,25 @@ ControlLoop PROC uses eax
 		je doTheWaka
 		inc shouldWaka
 		jmp ENDCHARCHECK
+
+	doTheWaka :
+		invoke sndPlaySound, offset wakaSound, 0001
+		dec shouldWaka
+		jmp ENDCHARCHECK
  
 	SCOREBIGDOT :
 		add score, 50
 		inc dotsEaten
 		mov[esi], dl
-		cmp shouldWaka, 1
-		je doTheWaka
-		inc shouldWaka
+		mov shouldWaka, 0
+		invoke sndPlaySound, offset bigDotSound, 0001
 		jmp ENDCHARCHECK
  
-	doTheWaka :
-		invoke sndPlaySound, offset wakaSound, 0001
-		mov eax, 100
-		call delay
-		dec shouldWaka
+	SCORECHERRY :
+		add score, 100
+		mov[esi], dl
+		mov shouldWaka, 0
+		invoke sndPlaySound, offset cherrySound, 0001
 		jmp ENDCHARCHECK
 
 	TRAVERSELEFTTUBE:

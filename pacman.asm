@@ -5,57 +5,66 @@ includelib \masm32\lib\winmm.lib
 
 .data
 
-	mapTempSize dd 1736
-	mapSize dd 3719				; TODO: un-hardcode this
-	splashSize dd 3570			; TODO: also un-hardcode this maybe
-	endSize dd 3570				; TODO: also un - hardcode this perhaps
+	;:: THESE VARIABLES MAKE THINGS LOOK NICE ::
+	mapSize dd 3719				; Fixed size of array containing map characters
+	splashSize dd 3570			; Fixed size of array containing opening splash screen characters
+	endSize dd 3570				; Fixed size of array containing game over splash screen characters
+	fixRightTube db 0			; set to 0FFh when right tube is traversed through, used to make tube traversal look nice
+	fixLeftTube db 0			; set to 0FFh when left tube is traversed through, used to make tube traversal look nice
+	gameIsOver db 0				; set to 0FFh when pacman dies and is out of lives, used to display game over splash screen
+	ready db "R E A D Y",0		; "Ready" text, shown under Ghost pen before game starts
+
+	;:: PACMAN ASSOCIATED VARIABLES ::
 	pacXCoord db 28				; byte used to hold the X-coordinate of PacMan
 	pacYCoord db 23				; byte used to hold the Y-coordinate of PacMan
-	pacChar1 db ">"
-	pacChar2 db "'"
+	pacChar1 db ">"				; byte used to hold the leftmost character of pacman's face
+	pacChar2 db "'"				; byte used to hold thr rightmost character of pacman's face
 	moveInst dd MovePacLeft		; holds address of movePacman instruction to execute
 	moveCache dd MovePacLeft	; holds backup movement instruction in case moveInst is not possible
-	fixRightTube db 0
-	fixLeftTube db 0
-	gameIsOver db 0
 
-	G1XCoord db 26
-	G1YCoord db 11
-	G1moveInst dd MoveG1Left	; holds address of movePacman instruction to execute
-	G1moveCache dd MoveG1Left	; holds backup movement instruction in case moveInst is not possible
-	G1options dd 0,0,0
-	G1NumOpts db 0
+	;:: G1 ASSOCIATED VARIABLES ::
+	G1XCoord db 26				; byte used to hold the X-coordinate of G1
+	G1YCoord db 11				; byte used to hold the Y-coordinate of G1
+	G1moveInst dd MoveG1Left	; holds address of moveG1 instruction to execute
+	G1moveCache dd MoveG1Left	; holds backup movement instruction in case G1moveInst is not possible
+	G1options dd 0,0,0			; holds addresses of move instructions that G1 can execute without going backwards or through a wall
+	G1NumOpts db 0				; holds the number of directions G1 can move in without going backwards or through a wall
 
+	;:: G2 ASSOCIATED VARIABLES::
+	; see G1 associated variables for info on each one
 	G2XCoord db 28
 	G2YCoord db 11
-	G2moveInst dd MoveG2Right	; holds address of movePacman instruction to execute
-	G2moveCache dd MoveG2Right	; holds backup movement instruction in case moveInst is not possible
+	G2moveInst dd MoveG2Right
+	G2moveCache dd MoveG2Right
 	G2options dd 0,0,0
 	G2NumOpts db 0
 
+	;:: G3 ASSOCIATED VARIABLES::
+	; see G1 associated variables for info on each one
 	G3XCoord db 28
 	G3YCoord db 11
-	G3moveInst dd MoveG3Right	; holds address of movePacman instruction to execute
-	G3moveCache dd MoveG3Right	; holds backup movement instruction in case moveInst is not possible
+	G3moveInst dd MoveG3Right
+	G3moveCache dd MoveG3Right
 	G3options dd 0,0,0
 	G3NumOpts db 0
 
+	;:: G4 ASSOCIATED VARIABLES::
+	; see G1 associated variables for info on each one
 	G4XCoord db 28
 	G4YCoord db 11
-	G4moveInst dd MoveG4Right	; holds address of movePacman instruction to execute
-	G4moveCache dd MoveG4Right	; holds backup movement instruction in case moveInst is not possible
+	G4moveInst dd MoveG4Right
+	G4moveCache dd MoveG4Right
 	G4options dd 0,0,0
 	G4NumOpts db 0
 
-	ready db "R E A D Y",0
-	gmover db "G A M E   O V E R",0
-	score dd 0
-	level dd 1
-	lives db 3
-	dotsEaten db 0
-	gameClock dd 0
-	wallColor db 9
-	shouldWaka db 0
+	;:: GENERAL GAME FLOW VARIABLES ::
+	score dd 0					; Player's score, increases with number of dots and fruit eaten
+	level dd 1					; Level that player is playing, increases with every 244 dots eaten
+	lives db 3					; Player's lives, decremented every time pacman lands in the same X and Y coordinate as a ghost
+	dotsEaten db 0				; Dots pacman has eaten in a level, reset to 0 upon every new level
+	gameClock dd 0				; Incremented every iteration of ControlLoop, used to show cherry and make ghosts trickle out of ghost pen
+	wallColor db 9				; Holds color to draw level walls with, changes every new level
+	shouldWaka db 0				; if 1, play waka sound
 
 	beginSound BYTE "C:\Irvine\pacman_beginning.wav", 0
 	endSound BYTE "C:\Irvine\pacman_death.wav", 0

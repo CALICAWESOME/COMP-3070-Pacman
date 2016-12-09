@@ -135,12 +135,6 @@ includelib \masm32\lib\winmm.lib
 			db "4 . 1888888888888888883 . 183 . 1888888888888888883 . 4                                                                ", 0
 			db "4 . . . . . . . . . . . . . . . . . . . . . . . . . . 4                                                                ", 0
 			db "1888888888888888888888888888888888888888888888888888883                                                                 "
-
-	aLife db "   @5555  ",0
-		  db " @22222266",0
-		  db "@Q2222    ",0
-		  db " @22222266",0
-		  db "   @5555  ",0
 						
 
 	splash db " ~ 789 789 789 789 789 789 789 789 789 789 788888888888888888888888888888889 789 789 789 789 789 789 789 789 789 789 ~", 0
@@ -2523,7 +2517,9 @@ CheckPos PROC
 
 CheckPos ENDP
 
+;:: CANIGOHERE ::
 ; eax = character to check
+; checks to see if the character in eax is a character that can be moved across
 
 CanIGoHere PROC
 
@@ -2546,6 +2542,9 @@ CanIGoHere PROC
 
 CanIGoHere ENDP
 
+;:: FIXLEFTTUBEPLS ::
+; Clears any left over pacmen or ghosts left over from going through the left tube
+
 FixLeftTubePls PROC
 
 	mov dl, 54
@@ -2559,6 +2558,9 @@ FixLeftTubePls PROC
 	ret
 
 FixLeftTubePls ENDP
+
+;:: FIXRIGHTTUBEPLS ::
+; Clears any left over pacmen or ghosts left over from going through the right tube
 
 FixRightTubePls PROC
 
@@ -2574,80 +2576,67 @@ FixRightTubePls PROC
 
 FixRightTubePls ENDP
 
+;:: NEXTLEVEL ::
+; this procedure is called when pacman eats all 244 dots in a level
+
 NextLevel PROC
 
-	inc level
+	inc level					; increment level
 	mov esi, OFFSET mapTemp
 	mov edi, OFFSET theMap
 	mov ecx, mapSize
 	mov edx, 0
 	call Gotoxy
-	RESETMAP:
+	RESETMAP:					; reset all the dots in the map
 		mov al, [esi]
 		mov [edi], al
 		inc esi
 		inc edi
 		loop RESETMAP
 
-	cmp wallColor, 13
+	cmp wallColor, 13			; if the walls are light magenta,
 	jne DONTLOOPWALLCOLORBACK
-	mov wallColor, 8
+	mov wallColor, 8			; manually set them back to blue
 
 	DONTLOOPWALLCOLORBACK:
-		inc wallColor
+		inc wallColor			; otherwise just increment wallColor
 
-	call clrscr
-	call DrawMap
-	mov dotsEaten, 0
-	call SetupGame
+	call clrscr					; clear the screen
+	call DrawMap				; re-draw the map
+	mov dotsEaten, 0			; reset dotsEaten to zero
+	call SetupGame				; reset everybody;s coordinates
 
 	ret
 
 NextLevel ENDP
 
-; MAKE THIS WORK
-
-PrintALife PROC
-
-	; line length = 11
-	mov edx, OFFSET aLife
-	mov ecx, 5
-
-	PRINTTHATLIFE:
-		call GotoXY
-		call WriteString
-		add edx, LENGTHOF aLife
-		inc dh
-		loop PRINTTHATLIFE
-
-	ret
-
-PrintALife ENDP
+;:: CONTROLLOOP ::
+; this is the main procedure that drives game progression
 
 ControlLoop PROC uses eax
 
 	mov edx, 0141h
 	call Gotoxy
 	mov eax, score
-	call WriteDec
+	call WriteDec			; show the score in the top right corner of the screen
 
-	cmp gameClock, 150
+	cmp gameClock, 150		; if the gameClock is at 150, show the cherry where it should be
 	jne DONTSHOWCHERRY
 	call ShowCherry
 
 	DONTSHOWCHERRY:
 
-	cmp fixLeftTube, 0FFh
+	cmp fixLeftTube, 0FFh	; if the left tube needs to be fixed, fix it
 	jne DONTFIXLEFT
 	call FixLeftTubePls
 	DONTFIXLEFT:
 
-	cmp fixRightTube, 0FFh
+	cmp fixRightTube, 0FFh	; if the right ntube needs to be fixed, fix it
 	jne DONTFIXRIGHT
 	call FixRightTubePls
 	DONTFIXRIGHT:
 
-	call ReadKey
+	call ReadKey		; read from keyboard input buffer
 
 	cmp eax, 4B00h		; on left arrow key press
 	je MOVELEFT
@@ -2664,19 +2653,19 @@ ControlLoop PROC uses eax
 	jmp TRYMOVE
 
 	MOVELEFT:
-		mov moveInst, OFFSET MovePacLeft
+		mov moveInst, OFFSET MovePacLeft	; put MovePacLeft's address into MoveInst
 		jmp TRYMOVE
 
 	MOVEUP:
-		mov moveInst, OFFSET MovePacUp
+		mov moveInst, OFFSET MovePacUp		; put MovePacUp's address into MoveInst
 		jmp TRYMOVE
 
 	MOVERIGHT:
-		mov moveInst, OFFSET MovePacRight
+		mov moveInst, OFFSET MovePacRight	; put MovePacRight's addres into MoveInst
 		jmp TRYMOVE
 
 	MOVEDOWN:
-		mov moveInst, OFFSET MovePacDown
+		mov moveInst, OFFSET MovePacDown	; put MovePacDown's address into MoveInst
 		jmp TRYMOVE
 
 	TRYMOVE:
@@ -2695,26 +2684,26 @@ ControlLoop PROC uses eax
 
 	ENDMOVEMENT:
 
-	call IsPacKill
+	call IsPacKill	; Check to see if Pacman is dead
 
-	call G1Think
+	call G1Think	; make all of the ghosts think once
 	call G2Think
 	call G3Think
 	call G4Think
 
-	cmp gameClock, 50
+	cmp gameClock, 50	; if gameClock = 50, summon G2
 	jne DONTSUMMONG2
 	call SummonG2
 
 	DONTSUMMONG2:
 
-	cmp gameClock, 100
+	cmp gameClock, 100	; if gameClock = 100, summon G3
 	jne DONTSUMMONG3
 	call SummonG3
 
 	DONTSUMMONG3:
 
-	cmp gameClock, 150
+	cmp gameClock, 150	; if gameClock = 150, summon G4
 	jne DONTSUMMONG4
 	call SummonG4
 
@@ -2722,53 +2711,53 @@ ControlLoop PROC uses eax
 
 	movzx eax, pacYCoord
 	movzx ebx, pacXCoord
-	call CheckPos
+	call CheckPos		; it's time to do some scoring
 	mov edx, " "
 
-	cmp al, "."
+	cmp al, "."			; if pacman is on top of a dot
 	je SCOREDOT
 
-	cmp al, "~"
+	cmp al, "~"			; if pacman is on top of a power pellet
 	je SCOREBIGDOT
 
-	cmp al, "%"
+	cmp al, "%"			; if pacman is on top of a cherry
 	je SCORECHERRY
 
-	cmp al, ">"
+	cmp al, ">"			; if pacman is at the end of the right tube
 	je TRAVERSERIGHTTUBE
 
-	cmp al, "<"
+	cmp al, "<"			; if pacman is at thr rnd of the left tube
 	je TRAVERSELEFTTUBE
 
 	jmp ENDCHARCHECK
 
-	SCOREDOT :
-		add score, 10
-		inc dotsEaten
-		mov[esi], dl
-		cmp shouldWaka, 1
-		je doTheWaka
-		inc shouldWaka
+	SCOREDOT :				; DOT SCORING
+		add score, 10		; add 10 to score
+		inc dotsEaten		; increment dots eaten
+		mov [esi], dl		; put a space where the dot was in theMap
+		cmp shouldWaka, 1	; if ShouldWaka is 1
+		je doTheWaka		; waka
+		inc shouldWaka		; increment shouldWaka
 		jmp ENDCHARCHECK
 
 	doTheWaka :
-		invoke sndPlaySound, offset wakaSound, 0001
+		invoke sndPlaySound, offset wakaSound, 0001	; play a waka
 		dec shouldWaka
 		jmp ENDCHARCHECK
  
 	SCOREBIGDOT :
-		add score, 50
-		inc dotsEaten
-		mov[esi], dl
-		mov shouldWaka, 0
-		invoke sndPlaySound, offset bigDotSound, 0001
+		add score, 50		; add 50 to score
+		inc dotsEaten		; increment dots eaten
+		mov [esi], dl		; put a space where the power pellet was in theMap
+		mov shouldWaka, 0	; don't waka
+		invoke sndPlaySound, offset bigDotSound, 0001	; play power pellet sound
 		jmp ENDCHARCHECK
  
 	SCORECHERRY :
-		add score, 100
-		mov[esi], dl
-		mov shouldWaka, 0
-		invoke sndPlaySound, offset cherrySound, 0001
+		add score, 100		; add 100 to score
+		mov [esi], dl		; put a space where the cherry was in theMap
+		mov shouldWaka, 0	; don't waka
+		invoke sndPlaySound, offset cherrySound, 0001	; play cherry sound
 		jmp ENDCHARCHECK
 
 	TRAVERSELEFTTUBE:
@@ -2789,25 +2778,28 @@ ControlLoop PROC uses eax
 
 	ENDCHARCHECK:
 
-	call IsPacKill
+	call IsPacKill		; check to see if pacman is dead
 
-	cmp dotsEaten, 244
+	cmp dotsEaten, 244	; if pacman atw 244 pellets
 	jne KEEPEATING
 	mov eax, 1000
-	call Delay
-	call NextLevel
+	call Delay			; pause for emphasis
+	call NextLevel		; start the next level
 
 	KEEPEATING:
 
-	inc gameClock
+	inc gameClock		; increment the game clock with every iteration of ControlLoop
 	ret
 
 ControlLoop ENDP
 
+;:: GAMEOVER ::
+; displays game over splash screen
+
 GameOver PROC
 
 	call ClrScr
-	mov ecx, endSize; TODO: un - hardcode this
+	mov ecx, endSize
 	mov esi, OFFSET endScreen
 
 	DRAWENDLOOP:

@@ -239,16 +239,25 @@ main PROC
 
 main ENDP
 
+;:: SETUPGAME ::
+; Called when pacman dies, or when the player reaches the next level
+; Only called after map has been drawn or re-drawn
+; 
+; Resets Pacman, G1, G2, G3 and G4 to starting positions
+; Pacman: Where pacman would start in actual pacman
+; G1: just outside of ghost pen
+; G2, G3, G4: evenly spaced inside ghost pen
+
 SetupGame PROC
 
-	mov moveInst, OFFSET MovePacLeft
-	mov moveCache, OFFSET MovePacLeft
+	mov moveInst, OFFSET MovePacLeft	; Start pacman off moving left
+	mov moveCache, OFFSET MovePacLeft	; and make sure he stays moving left
 	mov gameClock, 0
 
 	mov pacXCoord, 28
 	mov pacYCoord, 23
 
-	mov pacChar1, ">"
+	mov pacChar1, ">"	; make pacman look like he is facing left, like his moveInst
 	mov pacChar2, "'"
 
 	mov G1XCoord, 26
@@ -270,16 +279,19 @@ SetupGame PROC
 	call ShowG4
 	call ShowReady
 
-	invoke sndPlaySound, offset beginSound, 0000
+	invoke sndPlaySound, offset beginSound, 0000	; Play the start level jingle
 
-	call UnShowReady
+	call UnShowReady	; get rid of the red "R E A D Y" text
 	ret
 
 SetupGame ENDP
 
+;:: DRAWMAP ::
+; Draws the pac-man map using theMap as a template to make it really pretty
+
 DrawMap PROC uses eax
 
-	mov ecx, mapSize			; TODO: un-hardcode this
+	mov ecx, mapSize
 	mov esi, OFFSET theMap
 
 	DRAWMAPLOOP:
@@ -296,25 +308,29 @@ DrawMap PROC uses eax
 		mov dh, 1
 		mov dl, 116
 		call Gotoxy
-		mov eax, level
+		mov eax, level		; show level in sidebar
 		call writeDec
 
 		mov dh, 27
 		mov dl, 65
 		call Gotoxy
-		movzx eax, lives
+		movzx eax, lives	; show lives in sidebar
 		call WriteDec
 
 		mov eax, 8
-		call SetTextColor
+		call SetTextColor	; reset text color
 
 		ret
 
 DrawMap ENDP
 
+;:: DRAWSPLASH ::
+; Draws the opening splash screen
+; works the same way as DrawMap
+
 DrawSplash PROC uses eax
 
-mov ecx, splashSize; TODO: un - hardcode this
+mov ecx, splashSize
 mov esi, OFFSET splash
 
 DRAWSPLASHLOOP:
@@ -326,11 +342,18 @@ DRAWSPLASHLOOP:
 	loop DRAWSPLASHLOOP
 
 	mov eax, 8
-	call SetTextColor
+	call SetTextColor	; reset text color
 
 	ret
 
 DrawSPLASH ENDP
+
+;:: DRAWWHATYOUSEE ::
+; Since visual studio gets whiny when you try and write any extended ascii characters in your .asm file
+; we wrote this procedure to decode special characters and output them as colored/unicode characters
+; for example, if the ascii code for the number '8' is stored in al when this procedure is called, the procedure will draw a horizontal double bar in the console
+;
+; Takes a character to draw in al, and draws the corresponding unicode (or not) character with its corresponding color in the console
 
 DrawWhatYouSee PROC
 
@@ -442,18 +465,6 @@ DrawWhatYouSee PROC
 	cmp al, "k"
 	je PRINTPACEYEPLS
 
-	cmp al, "m"
-	je PRINTTOPTEARPLS
-
-	cmp al, "s"
-	je PRINTMIDDLETEARPLS
-
-	cmp al, "q"
-	je PRINTLEFTTEARPLS
-
-	cmp al, "z"
-	je PRINTRIGHTTEARPLS
-
 	cmp al, "x"
 	je PRINTBOTTOMTEARPLS
 
@@ -503,22 +514,6 @@ DrawWhatYouSee PROC
 
 	PRINTPACEYEPLS :
 		call PrintPacEye
-		jmp KEEPDRAWING
-
-	PRINTTOPTEARPLS :
-		call PrintTopTear
-		jmp KEEPDRAWING
-
-	PRINTMIDDLETEARPLS :
-		call PrintMiddleTear
-		jmp KEEPDRAWING
-
-	PRINTLEFTTEARPLS :
-		call PrintLeftTear
-		jmp KEEPDRAWING
-
-	PRINTRIGHTTEARPLS :
-		call PrintRightTear
 		jmp KEEPDRAWING
 
 	PRINTBOTTOMTEARPLS :
@@ -641,6 +636,10 @@ DrawWhatYouSee PROC
 
 DrawWhatYouSee ENDP
 
+;:: PRINTPACEYE ::
+; CHARACTER: upper half block
+; COLOR:	 black with yellow background
+
 PrintPacEye PROC
 
 	mov eax, 14*16
@@ -654,57 +653,9 @@ PrintPacEye PROC
 
 PrintPacEye ENDP
 
-PrintTopTear PROC
-
-	mov eax, 11 + (14*16)
-	call SetTextColor
-	mov eax, 220
-	call WriteChar
-	mov eax, 14
-	call SetTextColor
-
-ret
-
-PrintTopTear ENDP
-
-PrintMiddleTear PROC
-
-	mov eax, 11
-	call SetTextColor
-	mov eax, 219
-	call WriteChar
-	mov eax, 14
-	call SetTextColor
-
-	ret
-
-PrintMiddleTear ENDP
-
-PrintLeftTear PROC
-
-	mov eax, 11 + (14 * 16)
-	call SetTextColor
-	mov eax, 222
-	call WriteChar
-	mov eax, 14
-	call SetTextColor
-
-	ret
-
-PrintLeftTear ENDP
-
-PrintRightTear PROC
-
-	mov eax, 11 + (14 * 16)
-	call SetTextColor
-	mov eax, 221
-	call WriteChar
-	mov eax, 14
-	call SetTextColor
-
-	ret
-
-PrintRightTear ENDP
+;:: PRINTBOTTOMTEAR ::
+; CHARACTER: top half block
+; COLOR:	 light cyan with yellow background
 
 PrintBottomTear PROC
 
@@ -1028,13 +979,13 @@ CarriageReturn ENDP
 ; ********************************************************************************************************************************************************************************************************
 ; PACMAN MOVEMENT PROCEDURES
 
-; dl = X-coordinate
-; dh = Y-coordinate
+;:: SHOWPAC ::
+; shows pacman at the x and y coordinates stored in pacXCoord and pacYCoord respectively
 
 ShowPac PROC uses edx
 
 	mov eax, black+(yellow*16)
-	call SetTextColor
+	call SetTextColor	; set the text color to black with a yellow background
 
 	mov dl, pacXCoord
 	mov dh, pacYCoord
@@ -1052,7 +1003,8 @@ ShowPac PROC uses edx
 
 ShowPac ENDP
 
-; takes current x and y coords of PacMan and sets that coord to a space
+;:: UNSHOWPAC ::
+; un-shows pacman by printing two spaces at the x and y coordinates stored in pacXCoord and pacYCoord respectively
 
 UnShowPac PROC
 
@@ -1060,7 +1012,7 @@ UnShowPac PROC
 	mov dh, pacYCoord
 	call Gotoxy			; move cursor to desired X and Y coordinate
 
-	mov eax, 32
+	mov eax, 32			; move the ascii code for space into eax to be printed
 	call WriteChar		; UNSHOW ME THE MANS
 	call WriteChar
 
@@ -1068,21 +1020,23 @@ UnShowPac PROC
 
 UnShowPac ENDP
 
-; move PacMan up one space
+;:: MOVEPACUP ::
+; moves pacman up one space, if possible
+; if that is not possible, do nothing and return a 1 in ebx
 
 MovePacUp PROC uses edx
 
 	movzx eax, pacYCoord
 	movzx ebx, pacXCoord
-	call CheckAbove
+	call CheckAbove		; move the character above pacman's current position into eax
 
-	call CanIGoHere
+	call CanIGoHere		; check to see if pacman can move into the space above him
 	cmp ebx, 1
-	je ENDUP
+	je ENDUP			; if he can't jump to the end of the procedure
 	
-	call UnShowPac
+	call UnShowPac		; otherwise, un-show pacman at his current poisition
 
-	mov pacChar1, 'v'
+	mov pacChar1, 'v'	; put the correct facing characters in the variables that show pacman
 	mov pacChar2, ':'
 	dec PacYCoord		; move up 1 Y-coordinate
 
@@ -1093,7 +1047,10 @@ MovePacUp PROC uses edx
 
 MovePacUp ENDP
 
-; move PacMan down one space
+;:: MOVEPACDOWN ::
+; moves pacman down one space, if possible
+; if that is not possible, do nothing and return a 1 in ebx
+; see MOVEPACUP for a more detailed instruction by instruction description
 
 MovePacDown PROC uses edx
 
@@ -1119,7 +1076,10 @@ MovePacDown PROC uses edx
 
 MovePacDown ENDP
 
-; move PacMan left one space
+;:: MOVEPACLEFT ::
+; moves pacman left one space, if possible
+; if that is not possible, do nothing and return a 1 in ebx
+; see MOVEPACUP for a more detailed instruction by instruction description
 
 MovePacLeft PROC uses edx
 
@@ -1145,7 +1105,10 @@ MovePacLeft PROC uses edx
 
 MovePacLeft ENDP
 
-; move PacMan right one space
+;:: MOVEPACRIGHT ::
+; moves pacman right one space, if possible
+; if that is not possible, do nothing and return a 1 in ebx
+; see MOVEPACUP for a more detailed instruction by instruction description
 
 MovePacRight PROC uses edx
 
@@ -1170,6 +1133,9 @@ MovePacRight PROC uses edx
 		ret
 
 MovePacRight ENDP
+
+;:: ISPACKILL ::
+; checks to see if pacman's coordinates are the same as any of the ghosts', one by one
 
 IsPacKill PROC
 
@@ -1213,25 +1179,28 @@ IsPacKill PROC
 
 		jmp HELIVES
 
-	YOUGOTCAUGHT:
-		call PacDeathAnim
-		dec lives
-		cmp lives, -1
-		je HEDEAD
-		call ClrScr
-		call DrawMap
-		call SetupGame
-		jmp HELIVES
+	YOUGOTCAUGHT:			; if pacman's coordinates are the same as any of the ghosts'
+		call PacDeathAnim	; spin pacman around once
+		dec lives			; lose a life
+		cmp lives, -1		; if no lives are left
+		je HEDEAD			; death is imminent
+		call ClrScr			; otherwise, clear the screen
+		call DrawMap		; and redraw the map
+		call SetupGame		; and reset everybody's coordinates
+		jmp HELIVES			; and start a new life
 		
-	HEDEAD:
-		mov gameIsOver, 0FFh
+	HEDEAD:					; if pacman bit the dust
+		mov gameIsOver, 0FFh; let the program know that the game is over. This will be checked against later
 		mov eax, 500
-		call Delay
+		call Delay			; pause for emphasis
 
 	HELIVES:
 		ret
 
 IsPacKill ENDP
+
+;:: PACDEATHANIM ::
+; an animation, shows pacman spin counterclockwise 360 degrees, starting by facing left
 
 PacDeathAnim PROC
 
@@ -1245,9 +1214,9 @@ PacDeathAnim PROC
 	mov eax, ">"
 	call WriteChar
 	mov eax, "'"
-	call WriteChar
+	call WriteChar	; show pacman facing left
 
-	mov eax, 100
+	mov eax, 100	; wait 100ms
 	call Delay
 
 	call GotoXY
@@ -1255,9 +1224,9 @@ PacDeathAnim PROC
 	mov eax, "V"
 	call WriteChar
 	mov eax, ":"
-	call WriteChar
+	call WriteChar	; show pacman facing up
 
-	mov eax, 100
+	mov eax, 100	; wait 100ms
 	call Delay
 
 	call GotoXY
@@ -1265,9 +1234,9 @@ PacDeathAnim PROC
 	mov eax, "."
 	call WriteChar
 	mov eax, "<"
-	call WriteChar
+	call WriteChar	; show pacman facing right
 
-	mov eax, 100
+	mov eax, 100	; wait 100ms
 	call Delay
 
 	call GotoXY
@@ -1275,21 +1244,21 @@ PacDeathAnim PROC
 	mov eax, ":"
 	call WriteChar
 	mov eax, 239
-	call WriteChar
+	call WriteChar	; show pacman facing down
 
-	mov eax, 100
+	mov eax, 100	; wait 100ms
 	call Delay
 
 	call GotoXY
 	mov eax, ">"
 	call WriteChar
 	mov eax, "'"
-	call WriteChar
+	call WriteChar	; show pacman facing left
 
-	invoke sndPlaySound, offset endSound, 0000
+	invoke sndPlaySound, offset endSound, 0000	; play pacman death sound
 
 	mov eax, 8
-	call SetTextColor
+	call SetTextColor	; reset text color
 
 	ret
 
@@ -1298,25 +1267,33 @@ PacDeathAnim ENDP
 ; ********************************************************************************************************************************************************************************************************
 ; G1 MOVEMENT PROCEDURES
 
+;:: SHOWG1 ::
+; Works the same way as ShowPac
+; Shows a ghost at x and y positions G1XCoord and GYCoord respectively
+
 ShowG1 PROC
 
-	mov eax, white+(lightred*16)
+	mov eax, white+(lightred*16)	; G1 has white eyes with a light red background
 	call SetTextColor
 
 	mov dl, G1XCoord
 	mov dh, G1YCoord
-	call Gotoxy
+	call Gotoxy			; move cursor to G1's x and y coordinate
 
-	mov eax, 248
-	call WriteChar
-	call WriteChar
+	mov eax, 248		; Ghost eyes are degree symbols	
+	call WriteChar		; Most living things have 2 eyes
+	call WriteChar		; Although the ghosts are ghosts, so technically they're no longer living
 
-	mov eax, 0Fh
+	mov eax, 0Fh		; reset text color
 	call SetTextColor
 
 	ret
 
 ShowG1 ENDP
+
+;:: UNSHOWG1 ::
+; Works similarly to UnShowPac
+; prints what was already there in the map at the x and y coordinates G1XCoord and G1YCoord, respectively
 
 UnShowG1 PROC
 
@@ -1327,40 +1304,44 @@ UnShowG1 PROC
 	mov esi, OFFSET theMap
 	movzx eax, G1YCoord
 	movzx ebx, G1XCoord
-	call CheckPos
-	call DrawWhatYouSee
+	call CheckPos		; returns the character at the x position in eax and the y position in ebx in al
+	call DrawWhatYouSee	; draws the character we got from calling the call above at G1XCoord and G1YCoord
 	inc esi
 	mov al, [esi]
-	call DrawWhatYouSee
+	call DrawWhatYouSee	; do it again, because a ghost is 2 characters wide
 
 	ret
 
 UnShowG1 ENDP
 
-; move PacMan up one space
+; move G1 up one space
+
+;:: MOVEG1UP ::
+; Works exactly the same as MovePacUp, but instead calling G1's Show and UnShow procedures
 
 MoveG1Up PROC uses edx
 
 	movzx eax, G1YCoord
 	movzx ebx, G1XCoord
-	call CheckAbove
+	call CheckAbove			; move the character above G1 into eax
 
-	call CanIGoHere
+	call CanIGoHere			; Can G1 go up there?
 	cmp ebx, 1
-	je ENDG1UP
+	je ENDG1UP				; If they can't, do nothing and return 1 in ebx
 
-	CARRYG1UP:
-		call UnShowG1
+	CARRYG1UP:				; if they can though,
+		call UnShowG1		; un-show G1
 		dec G1YCoord		; move up 1 Y-coordinate
 
-		call ShowG1
+		call ShowG1			; show G1 in their brand new place
 
 	ENDG1UP:
 		ret
 
 MoveG1Up ENDP
 
-; move G1 down one space
+;:: MOVEG1DOWN ::
+; see MoveG1Up
 
 MoveG1Down PROC uses edx
 
@@ -1383,7 +1364,8 @@ MoveG1Down PROC uses edx
 
 MoveG1Down ENDP
 
-; move G1 left one space
+;:: MOVEG1DLEFT ::
+; see MoveG1Up
 
 MoveG1Left PROC uses edx
 
@@ -1406,7 +1388,8 @@ MoveG1Left PROC uses edx
 
 MoveG1Left ENDP
 
-; move G1 right one space
+;:: MOVEG1RIGHT ::
+; see MoveG1Up
 
 MoveG1Right PROC uses edx
 
@@ -1429,31 +1412,34 @@ MoveG1Right PROC uses edx
 
 MoveG1Right ENDP
 
+;:: G1THINK ::
+;
+
 G1Think PROC
 
 	mov edi, OFFSET G1Options
 	mov G1NumOpts, 0
 
 	G1TRYUP:
-		cmp G1MoveCache, OFFSET MoveG1Down
-		je G1TRYDOWN
-
-		movzx eax, G1YCoord
+		cmp G1MoveCache, OFFSET MoveG1Down	; if G1 is already moving down
+		je G1TRYDOWN						; skip trying to move up, ghosts can't go backwards
+											; otherwise,
+		movzx eax, G1YCoord	
 		movzx ebx, G1XCoord
-		call CheckAbove
-		call CanIGoHere
+		call CheckAbove						; move the character above G1 into al
+		call CanIGoHere						; if the character above G1 isn't traversible
 		cmp ebx, 1
-		je G1TRYDOWN
-
-		mov [edi], OFFSET MoveG1Up
-		add edi, 4
-		inc G1NumOpts
+		je G1TRYDOWN						; skip trying to move up, it's not possible.
+											; otherwise,
+		mov [edi], OFFSET MoveG1Up			; Add MoveG1Up's address to the G1Options array
+		add edi, 4							; step forward one index of the G1Options array
+		inc G1NumOpts						; increment the number of options G1 has to traverse
 
 	G1TRYDOWN:
-		cmp G1MoveCache, OFFSET MoveG1Up
-		je G1TRYLEFT
+		cmp G1MoveCache, OFFSET MoveG1Up	; if G1 is already moving up
+		je G1TRYLEFT						; skip trying to move down, ghosts can't go backwards
 
-		movzx eax, G1YCoord
+		movzx eax, G1YCoord					; everything else under this label is the same as G1TRYUP, but instead G1 is trying to go down
 		movzx ebx, G1XCoord
 		call CheckBelow
 		call CanIGoHere
@@ -1465,10 +1451,10 @@ G1Think PROC
 		inc G1NumOpts
 
 	G1TRYLEFT:
-		cmp G1MoveCache, OFFSET MoveG1Right
-		je G1TRYRIGHT
+		cmp G1MoveCache, OFFSET MoveG1Right	; if G1 is already moving right
+		je G1TRYRIGHT						; skip trying to move left, ghosts can't go backwards
 
-		movzx eax, G1YCoord
+		movzx eax, G1YCoord					; everything else under this label is the same as G1TRYUP, but instead G1 is trying to go left
 		movzx ebx, G1XCoord
 		call CheckLeft
 		call CanIGoHere
@@ -1480,10 +1466,10 @@ G1Think PROC
 		inc G1NumOpts
 
 	G1TRYRIGHT:
-		cmp G1MoveCache, OFFSET MoveG1Left
-		je G1PREDECISION
+		cmp G1MoveCache, OFFSET MoveG1Left	; if G1 is already movine left
+		je G1PREDECISION					; skip trying to move right, ghosts can't go backwards
 
-		movzx eax, G1YCoord
+		movzx eax, G1YCoord					; everything else under this label is the same as G1TRYUP, but instead G1 is trying to go right
 		movzx ebx, G1XCoord
 		call CheckRight
 		call CanIGoHere
@@ -1495,22 +1481,22 @@ G1Think PROC
 		inc G1NumOpts
 
 	G1PREDECISION:
-		cmp G1NumOpts, 0
+		cmp G1NumOpts, 0					; if nothing is trversible
 		jne G1DECIDE
 
 		inc G1NumOpts
-		mov eax, G1MoveCache
+		mov eax, G1MoveCache				; move the move stored in the move cache into the list of options
 		mov G1options, eax
 
 	G1DECIDE:
-		movzx eax, G1NumOpts
-		call RandomRange
+		movzx eax, G1NumOpts				; move the number of options G1 has to travel into eax
+		call RandomRange					; generate a random number between 0 and eax-1
 		mov bl, 4
-		mul bl
+		mul bl								; multiply that number by 4
 		mov esi, OFFSET G1Options
-		add esi, eax
-		mov eax, [esi]
-		mov G1MoveInst, eax
+		add esi, eax						; add that number to the address of the first element of G1Options			
+		mov eax, [esi]						; mov the value stored inside the address stored in esi into eax
+		mov G1MoveInst, eax					; move that address into G1MoveInst
 
 	TRYG1MOVE:
 		mov eax, OFFSET MoveG1Up
@@ -1542,7 +1528,7 @@ G1Think PROC
 	G1TRAVERSELEFTTUBE:
 		mov fixRightTube, 0FFh
 		mov fixLeftTube, 0ffh
-		mov G1XCoord, 54
+		mov G1XCoord, 54		; move G1 to exit the right tube
 		mov G1YCoord, 14
 		call ShowG1
 		jmp G1ENDCHARCHECK
@@ -1550,7 +1536,7 @@ G1Think PROC
 	G1TRAVERSERIGHTTUBE:
 		mov fixRightTube, 0FFh
 		mov fixLeftTube, 0ffh
-		mov G1XCoord, 0
+		mov G1XCoord, 0			; move G1 to exit the left tube
 		mov G1YCoord, 14
 		call ShowG1
 		jmp G1ENDCHARCHECK
@@ -1562,10 +1548,12 @@ G1Think ENDP
 
 ; ********************************************************************************************************************************************************************************************************
 ; G2 MOVEMENT PROCEDURES
+; All the rest of the G2, G3, and G4 procedures are literally exactly the same as the G1 procedures, only with every G1 replaced with a G2, G3, or G4.
+; The only differences are in color, and the summon procedure, which will be commented for G2.
 
 ShowG2 PROC
 
-	mov eax, white+(13*16)
+	mov eax, white+(13*16)	; G2 has white eyes with a light magenta background
 	call SetTextColor
 
 	mov dl, G2XCoord
@@ -1602,7 +1590,7 @@ UnShowG2 PROC
 
 UnShowG2 ENDP
 
-; move PacMan up one space
+; move G2 up one space
 
 MoveG2Up PROC uses edx
 
@@ -1694,9 +1682,12 @@ MoveG2Right PROC uses edx
 
 MoveG2Right ENDP
 
+;:: SUMMONG2 ::
+; moves G2 out of the ghost pen and to x position 26, and y position 11
+
 SummonG2 PROC
 
-	call UnShowG2
+	call UnShowG2		
 	mov G2XCoord, 26
 	mov G2YCoord, 11
 	call ShowG2
@@ -1841,7 +1832,7 @@ G2Think ENDP
 
 ShowG3 PROC
 
-	mov eax, white+(11*16)
+	mov eax, white+(11*16)	; G3 has white eyes with a light cyan background
 	call SetTextColor
 
 	mov dl, G3XCoord
@@ -1878,7 +1869,7 @@ UnShowG3 PROC
 
 UnShowG3 ENDP
 
-; move PacMan up one space
+; move G3 up one space
 
 MoveG3Up PROC uses edx
 
@@ -2117,7 +2108,7 @@ G3Think ENDP
 
 ShowG4 PROC
 
-	mov eax, white+(10*16)
+	mov eax, white+(10*16)	; G4 has white eyes and a light breen background
 	call SetTextColor
 
 	mov dl, G4XCoord
@@ -2154,7 +2145,7 @@ UnShowG4 PROC
 
 UnShowG4 ENDP
 
-; move PacMan up one space
+; move G4 up one space
 
 MoveG4Up PROC uses edx
 
@@ -2390,6 +2381,9 @@ G4Think ENDP
 
 ; ********************************************************************************************************************************************************************************************************
 
+;:: SHOWCHERRY ::
+; shows the cherry (a red percent sign) at position (28, 17)
+
 ShowCherry PROC
 
 	mov dh, 17
@@ -2415,6 +2409,9 @@ ShowCherry PROC
 
 ShowCherry ENDP
 
+;:: SHOWREADY ::
+; Shows "R E A D Y" in red right under the ghost pen
+
 SHOWREADY PROC
 
 	mov dh, 17
@@ -2432,6 +2429,9 @@ SHOWREADY PROC
 
 SHOWREADY ENDP
 
+;:: UNSHOWREADY ::
+; Prints 9 spaces under the ghost pen where "R E A D Y" would be
+
 UNSHOWREADY PROC
 
 	mov dh, 17
@@ -2447,6 +2447,8 @@ UNSHOWREADY PROC
 
 UNSHOWREADY ENDP
 
+;:: CHECKABOVE ::
+; returns the character above coordinate (x, y) in the map in eax
 ; eax = y coordinate
 ; ebx = x coordinate
 
@@ -2459,6 +2461,8 @@ CheckAbove PROC uses esi
 
 CheckAbove ENDP
 
+;:: CHECKBELOW ::
+; returns the character below coordinate (x, y) in the map in eax
 ; eax = y coordinate
 ; ebx = x coordinate
 
@@ -2471,6 +2475,8 @@ CheckBelow PROC
 
 CheckBelow ENDP
 
+;:: CHECKLEFT ::
+; returns the character to the left of coordinate (x, y) in the map in eax
 ; eax = y coordinate
 ; ebx = x coordinate
 
@@ -2483,6 +2489,8 @@ CheckLeft PROC
 
 CheckLeft ENDP
 
+;:: CHECKRIGHT ::
+; returns the character to the right of coordinate (x, y) in the map in eax
 ; eax = y coordinate
 ; ebx = x coordinate
 
@@ -2495,6 +2503,8 @@ CheckRight PROC
 
 CheckRight ENDP
 
+;:: CHECKPOS ::
+; returns the character at coordinate (x, y) in the map in eax
 ; eax = y coordinate
 ; ebx = x coordinate
 

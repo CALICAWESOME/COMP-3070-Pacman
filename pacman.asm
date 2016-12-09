@@ -664,6 +664,10 @@ PrintBottomTear PROC
 
 PrintBottomTear ENDP
 
+; ::PRINTNOSE ::
+; CHARACTER: capital C
+; COLOR:	 black with yellow background
+
 PrintNose PROC
 
 	mov eax, 14*16
@@ -677,6 +681,10 @@ PrintNose PROC
 
 PrintNose ENDP
 
+; ::PRINTGLOVE ::
+; CHARACTER: full block
+; COLOR:	 dark red
+
 PrintGlove PROC
 
 	mov eax, 4
@@ -687,6 +695,10 @@ PrintGlove PROC
 	ret
 
 PrintGlove ENDP
+
+; ::PRINTO ::
+; CHARACTER: top half block
+; COLOR:	 dark cyan with white background
 
 PrintO PROC
 
@@ -703,6 +715,10 @@ PrintO PROC
 
 PrintO ENDP
 
+; ::PRINTEYELEFT ::
+; CHARACTER: right half block (not a mistake)
+; COLOR:	 whatever color is currently set with a white background
+
 PrintEyeLeft PROC
 	
 	Call GetTextColor
@@ -717,6 +733,10 @@ PrintEyeLeft PROC
 	ret
 
 PrintEyeLeft ENDP
+
+; ::PRINTEYERIGHT ::
+; CHARACTER: left half block (not a mistake)
+; COLOR:	 whatever color is currently set with a white background
 
 PrintEyeRight PROC
 
@@ -733,6 +753,10 @@ PrintEyeRight PROC
 
 PrintEyeRight ENDP
 
+; ::PRINTTONGUE ::
+; CHARACTER: bottom half block
+; COLOR:	 yellow with a red background
+
 PrintTongue PROC
 
 	mov eax, 14 + (12 * 16)
@@ -745,6 +769,10 @@ PrintTongue PROC
 	ret
 
 PrintTongue ENDP
+
+; ::PRINTLEG ::
+; CHARACTER: bottom half block
+; COLOR:	 red with a yellow background
 
 PrintLeg PROC
 
@@ -759,6 +787,10 @@ PrintLeg PROC
 
 PrintLeg ENDP
 
+; ::PRINTEYE ::
+; CHARACTER: >
+; COLOR:	 whatever color is currently set
+
 PrintEye PROC
 
 	mov eax, 62
@@ -767,6 +799,10 @@ PrintEye PROC
 	ret
 
 PrintEye endp
+
+; ::PRINTBROWUP ::
+; CHARACTER: /
+; COLOR:	 black with yellow background
 
 PrintBrowUp PROC
 
@@ -779,6 +815,10 @@ PrintBrowUp PROC
 
 PrintBrowUp ENDP
 
+; ::PRINTBROWDOWN ::
+; CHARACTER: \
+; COLOR:	 black with yellow background
+
 PrintBrowDown PROC
 
 	mov eax, 92
@@ -790,6 +830,10 @@ PrintBrowDown PROC
 
 PrintBrowDown ENDP
 
+; ::PRINTFIVE ::
+; CHARACTER: 5
+; COLOR:	 whatever color is currently set
+
 PrintFive PROC
 
 	mov eax, 53
@@ -798,6 +842,10 @@ PrintFive PROC
 	ret
 
 PrintFive ENDP
+
+; ::PRINTONE ::
+; CHARACTER: 1
+; COLOR:	 whatever color is currently set
 
 PrintOne PROC
 
@@ -808,6 +856,10 @@ PrintOne PROC
 
 PrintOne ENDP
 
+; ::PRINTBLOCK ::
+; CHARACTER: full block
+; COLOR:	 whatever color is currently set
+
 PrintBlock PROC
 
 	mov eax, 219
@@ -816,6 +868,10 @@ PrintBlock PROC
 	ret
 
 PrintBlock ENDP
+
+; ::PRINTTOPBLOCK ::
+; CHARACTER: top half block
+; COLOR:	 whatever color is currently set
 
 PrintTopBlock PROC
 
@@ -826,6 +882,10 @@ PrintTopBlock PROC
 
 PrintTopBlock ENDP
 
+; ::PRINTBOTTOMBLOCK ::
+; CHARACTER: bottom half block
+; COLOR:	 whatever color is currently set
+
 PrintBottomBlock PROC
 
 	mov eax, 220
@@ -834,6 +894,10 @@ PrintBottomBlock PROC
 	ret
 
 PrintBottomBlock ENDP
+
+; ::PRINTLEFTBLOCK ::
+; CHARACTER: left half block
+; COLOR:	 whatever color is currently set
 
 PrintLeftBlock PROC
 
@@ -844,6 +908,10 @@ PrintLeftBlock PROC
 
 PrintLeftBlock ENDP
 
+; ::PRINTRIGHTBLOCK ::
+; CHARACTER: right half block
+; COLOR:	 whatever color is currently set
+
 PrintRightBlock PROC
 
 	mov eax, 222
@@ -852,6 +920,10 @@ PrintRightBlock PROC
 	ret
 
 PrintRightBlock ENDP
+
+; ::PRINTWALL7 ::
+; CHARACTER: top left corner pipes
+; COLOR:	 whatever color is currently in wallColor (changes each level)
 
 PrintWall7 PROC
 
@@ -864,6 +936,10 @@ PrintWall7 PROC
 
 PrintWall7 ENDP
 
+; ::PRINTWALL9 ::
+; CHARACTER: top right corner pipes
+; COLOR:	 whatever color is currently in wallColor(changes each level)
+
 PrintWall9 PROC
 
 	movzx eax, wallColor
@@ -874,6 +950,10 @@ PrintWall9 PROC
 	ret
 
 PrintWall9 ENDP
+
+; ::PRINTWALL1 ::
+; CHARACTER: bottom left corner pipes
+; COLOR:	 whatever color is currently in wallColor(changes each level)
 
 PrintWall1 PROC
 
@@ -886,6 +966,10 @@ PrintWall1 PROC
 
 PrintWall1 ENDP
 
+; ::PRINTWALL3 ::
+; CHARACTER: bottom right corner pipes
+; COLOR:	 whatever color is currently in wallColor(changes each level)
+
 PrintWall3 PROC
 
 	movzx eax, wallColor
@@ -896,6 +980,10 @@ PrintWall3 PROC
 	ret
 
 PrintWall3 ENDP
+
+; ::PRINTWALL8 ::
+; CHARACTER: horizontal pipes
+; COLOR:	 whatever color is currently in wallColor(changes each level)
 
 PrintWall8 PROC
 
@@ -908,6 +996,10 @@ PrintWall8 PROC
 
 PrintWall8 ENDP
 
+; ::PRINTWALL4 ::
+; CHARACTER: vertical pipes
+; COLOR:	 whatever color is currently in wallColor(changes each level)
+
 PrintWall4 PROC
 
 	movzx eax, wallColor
@@ -918,6 +1010,10 @@ PrintWall4 PROC
 	ret
 
 PrintWall4 ENDP
+
+; ::PRINTDOT ::
+; CHARACTER: centered dot
+; COLOR:	 light gray
 
 PrintDot PROC
 
@@ -930,6 +1026,10 @@ PrintDot PROC
 
 PrintDot ENDP
 
+; ::PRINTBIGDOT ::
+; CHARACTER: centered big dot
+; COLOR:	 light gray
+
 PrintBigDot PROC
 	mov eax, 7
 	call SetTextColor
@@ -939,6 +1039,10 @@ PrintBigDot PROC
 	ret
 
 PrintBigDot ENDP
+
+; ::PRINTGATE ::
+; CHARACTER: horizontal singular pipe centered
+; COLOR:	 red
 
 PrintGate PROC
 
@@ -951,6 +1055,10 @@ PrintGate PROC
 
 PrintGate ENDP
 
+; ::PRINTCHERRY ::
+; CHARACTER: %
+; COLOR:	 red
+
 PrintCherry PROC
 
 	mov eax, 12
@@ -961,6 +1069,9 @@ PrintCherry PROC
 	ret
 
 PrintCherry ENDP
+
+; ::CARRIAGERETURN ::
+; goes to the next line
 
 CarriageReturn PROC
 
@@ -2749,14 +2860,14 @@ ControlLoop PROC uses eax
 		add score, 50		; add 50 to score
 		inc dotsEaten		; increment dots eaten
 		mov [esi], dl		; put a space where the power pellet was in theMap
-		mov shouldWaka, 0	; don't waka
+		mov shouldWaka, -2	; don't waka
 		invoke sndPlaySound, offset bigDotSound, 0001	; play power pellet sound
 		jmp ENDCHARCHECK
  
 	SCORECHERRY :
 		add score, 100		; add 100 to score
 		mov [esi], dl		; put a space where the cherry was in theMap
-		mov shouldWaka, 0	; don't waka
+		mov shouldWaka, 1	; don't waka
 		invoke sndPlaySound, offset cherrySound, 0001	; play cherry sound
 		jmp ENDCHARCHECK
 

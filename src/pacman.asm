@@ -1,7 +1,6 @@
 INCLUDE Irvine32.inc
- 
-include \masm32\include\winmm.inc
-includelib \masm32\lib\winmm.lib
+INCLUDE .\winmm.inc
+INCLUDELIB .\winmm.lib
 
 .data
 
@@ -66,11 +65,11 @@ includelib \masm32\lib\winmm.lib
 	wallColor db 9				; Holds color to draw level walls with, changes every new level
 	shouldWaka db 0				; if 1, play waka sound
 
-	beginSound BYTE "C:\Pacman-Conroy_Martin\sounds\pacman_beginning.wav", 0
-	endSound BYTE "C:\Pacman-Conroy_Martin\sounds\pacman_death.wav", 0
-	wakaSound BYTE "C:\Pacman-Conroy_Martin\sounds\waka.wav", 0
-	bigDotSound BYTE "C:\Pacman-Conroy_Martin\sounds\bigdot.wav", 0
-	cherrySound BYTE "C:\Pacman-Conroy_Martin\sounds\cherry.wav", 0
+	beginSound BYTE ".\sounds\pacman_beginning.wav", 0
+	endSound BYTE ".\sounds\pacman_death.wav", 0
+	wakaSound BYTE ".\sounds\waka.wav", 0
+	bigDotSound BYTE ".\sounds\bigdot.wav", 0
+	cherrySound BYTE ".\sounds\cherry.wav", 0
 
 	mapTemp	db "788888888888888888888888889 788888888888888888888888889 788888888888888888888888888888888888888888888888888888888888889", 0
 			db "4 . . . . . . . . . . . . 4 4 . . . . . . . . . . . . 4 4wSCORE:                                                LVL   4", 0

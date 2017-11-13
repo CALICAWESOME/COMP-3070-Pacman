@@ -3,7 +3,7 @@ Jared Conroy & Bobby Martin
 Pacman Project
 COMP-3070-01
 
-HOW TO RUN THE GAME:
+HOW TO RUN THE GAME:<br>
 1.) Run 'pacman.bat'
 
 Jared's Contributions:

@@ -4,7 +4,7 @@ Pacman Project
 COMP-3070-01
 
 HOW TO RUN THE GAME:<br>
-1.) Run 'pacman.bat'
+1. Run 'pacman.bat'
 
 Jared's Contributions:
 - Created all graphics and splash screens
